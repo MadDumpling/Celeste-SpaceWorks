@@ -229,3 +229,5 @@ __marimo__/
 # Presets (generated)
 presets/*.json
 !presets/default.json
+
+mission_reports/
