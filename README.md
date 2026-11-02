@@ -7,6 +7,8 @@ Mass, ideal delta-v, TWR, burn time, and installed power ratings update as the
 design changes, and a lunar-reachability check propagates the vehicle against
 the JPL DE440s ephemeris.
 
+https://www.youtube.com/watch?v=Surbwp79n4k
+
 ## Viewport controls
 
 | Input | Action |
