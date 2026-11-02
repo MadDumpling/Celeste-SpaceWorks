@@ -1,4 +1,4 @@
-# Spacecraft Configurator
+# Celeste SpaceWorks
 
 An interactive spacecraft mission-design and analysis platform. A DearPyGui panel edits the
 vehicle (engines, propellant tanks, payloads, landing legs, RCS thrusters, solar
