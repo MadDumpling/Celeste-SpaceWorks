@@ -270,15 +270,13 @@ def test_load_lunar_demo_replaces_the_design_and_updates_the_check(tmp_path):
 def test_refresh_publishes_the_check_text_to_the_panel(tmp_path):
     ui = SpacecraftDesignerUI(EventBus(), preset_path=tmp_path / "design.json")
     ui.built = True
-    designer_module.dpg.set_value.reset_mock()
-
     ui.refresh()
-    shown = {call.args[0]: call.args[1] for call in designer_module.dpg.set_value.call_args_list}
+    shown = {"spacecraft_lunar_check": designer_module.qt.get_value("spacecraft_lunar_check")}
 
     assert "spacecraft_lunar_check" in shown
     assert shown["spacecraft_lunar_check"] == o.prescreen_text(o.lunar_prescreen(ui.analysis))
     assert "falls short" in shown["spacecraft_lunar_check"]
 
     ui.load_lunar_demo()
-    shown = {call.args[0]: call.args[1] for call in designer_module.dpg.set_value.call_args_list}
+    shown = {"spacecraft_lunar_check": designer_module.qt.get_value("spacecraft_lunar_check")}
     assert shown["spacecraft_lunar_check"].startswith("Ready")

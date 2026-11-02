@@ -88,14 +88,11 @@ def test_appearance_controls_publish_visual_only_updates():
 def test_refresh_shows_ranked_design_advice_on_mission_tab():
     ui = SpacecraftDesignerUI(EventBus())
     ui.built = True
-    designer_module.dpg.set_value.reset_mock()
-
     ui.refresh()
 
-    values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
-    }
+    values = {tag: designer_module.qt.get_value(tag) for tag in (
+        "spacecraft_design_advisor",
+    )}
     assert "RANKED DESIGN ADVISOR" in values["spacecraft_design_advisor"]
     assert "1. [" in values["spacecraft_design_advisor"]
     assert "Suggested action:" in values["spacecraft_design_advisor"]
@@ -104,14 +101,11 @@ def test_refresh_shows_ranked_design_advice_on_mission_tab():
 def test_export_mission_report_writes_pdf_and_discloses_path(tmp_path, monkeypatch):
     ui = SpacecraftDesignerUI(EventBus())
     monkeypatch.chdir(tmp_path)
-    designer_module.dpg.set_value.reset_mock()
-
     ui.export_mission_report()
 
-    values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
-    }
+    values = {"mission_report_export_status": designer_module.qt.get_value(
+        "mission_report_export_status"
+    )}
     assert "Mission report saved to" in values["mission_report_export_status"]
     report_paths = list((tmp_path / "mission_reports").glob("*.pdf"))
     assert len(report_paths) == 1
@@ -189,14 +183,11 @@ def test_selected_component_viewport_overlay_shows_hardware_details():
     app = DesignerApplication.__new__(DesignerApplication)
     app.designer = ui
     app.viewport = type("ViewportState", (), {"selected_id": engine.id})()
-    designer_module.dpg.set_value.reset_mock()
-
     app._refresh_component_overlay()
 
-    values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
-    }
+    values = {tag: designer_module.qt.get_value(tag) for tag in (
+        "viewport_component_title", "viewport_component_details",
+    )}
     assert values["viewport_component_title"] == engine.name
     assert f"Main-engine thrust: {engine.thrust:,.1f} N" in values[
         "viewport_component_details"
@@ -208,14 +199,11 @@ def test_selected_component_viewport_overlay_shows_hardware_details():
 
 def test_mission_milestone_cards_mirror_current_timeline_state():
     ui = SpacecraftDesignerUI(EventBus())
-    designer_module.dpg.set_value.reset_mock()
-
     ui._refresh_mission_timeline()
 
-    values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
-    }
+    values = {tag: designer_module.qt.get_value(tag) for tag in (
+        "mission_stage_launch", "mission_stage_arrival", "mission_stage_touchdown",
+    )}
     assert values["mission_stage_launch"] == "Launch: READY"
     assert values["mission_stage_arrival"] == "Lunar arrival: READY"
     assert values["mission_stage_touchdown"] == "Touchdown: READY"
@@ -225,19 +213,18 @@ def test_loading_showcase_scenario_sets_preset_and_mission_inputs(monkeypatch):
     scenario_name = "Failure — insufficient TLI propellant"
     scenario = SHOWCASE_SCENARIOS[scenario_name]
     monkeypatch.setattr(
-        designer_module.dpg,
+        designer_module.qt,
         "get_value",
         lambda tag: scenario_name if tag == "lunar_demo_scenario" else None,
     )
-    designer_module.dpg.set_value.reset_mock()
     ui = SpacecraftDesignerUI(EventBus())
 
     ui.load_demo_scenario()
 
     assert ui.spacecraft.name == "Failure demo — insufficient TLI propellant"
     set_values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
+        tag: designer_module.qt.items[tag].value
+        for tag in ("lunar_departure_date", "lunar_transfer_days", "lunar_reachability_details")
     }
     assert set_values["lunar_departure_date"] == scenario["departure_date"]
     assert set_values["lunar_transfer_days"] == scenario["transfer_days"]
@@ -299,7 +286,7 @@ def test_lunar_mission_callback_runs_trajectory_and_reports_result(monkeypatch):
             calls.append((craft, departure, transfer_time)) or result
         ),
     )
-    monkeypatch.setattr(designer_module.dpg, "get_value", lambda tag: {
+    monkeypatch.setattr(designer_module.qt, "get_value", lambda tag: {
         "lunar_departure_date": "2030-01-01",
         "lunar_transfer_days": 5.0,
     }[tag])
@@ -600,24 +587,17 @@ def test_analysis_panel_reports_auxiliary_thrust_and_power_surplus():
     ui.add_component(None, None, "solar_panel")
     ui.add_component(None, None, "avionics")
     ui.built = True
-    designer_module.dpg.set_value.reset_mock()
-    designer_module.dpg.configure_item.reset_mock()
-
     ui.refresh()
 
-    values = {
-        call.args[0]: call.args[1]
-        for call in designer_module.dpg.set_value.call_args_list
-    }
+    values = {tag: designer_module.qt.get_value(tag) for tag in (
+        "spacecraft_rcs_thrust", "spacecraft_power", "spacecraft_readiness_bar",
+        "health_power",
+    )}
     assert values["spacecraft_rcs_thrust"].startswith("RCS thrust: 1,800.0 N")
     assert "+2.05 kW surplus" in values["spacecraft_power"]
     assert "spacecraft_readiness_bar" in values
     assert values["health_power"].startswith("POWER  +2.05 kW")
-    assert not any(
-        call.args[0] == "spacecraft_readiness_bar"
-        and "color" in call.kwargs
-        for call in designer_module.dpg.configure_item.call_args_list
-    )
+    assert designer_module.qt.items["spacecraft_readiness_bar"].value is not None
 
 
 def test_mirror_copy_reflects_placement_and_selects_the_copy(tmp_path):

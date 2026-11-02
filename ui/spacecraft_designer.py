@@ -1,4 +1,4 @@
-"""DearPyGui spacecraft configurator panel for the 3D OpenGL viewport."""
+"""Qt spacecraft configurator panel for the 3D OpenGL viewport."""
 
 import threading
 from collections import Counter
@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 from uuid import uuid4
 
-import dearpygui.dearpygui as dpg
+from .qt_widgets import qt
 from astropy import units as u
 
 from spacecraft.analysis import (
@@ -179,27 +179,27 @@ class SpacecraftDesignerUI:
         return craft
 
     def build(self):
-        with dpg.window(
+        with qt.window(
             label="Spacecraft Designer",
             tag="spacecraft_designer_window",
             pos=(0, 28),
             width=520,
             height=1025,
         ):
-            dpg.add_text(
+            qt.add_text(
                 "SPACECRAFT CONFIGURATOR",
                 color=(175, 190, 210),
             )
-            dpg.add_input_text(
+            qt.add_input_text(
                 label="Vehicle name",
                 default_value=self.spacecraft.name,
                 callback=self._rename_spacecraft,
                 on_enter=True,
                 tag="spacecraft_name_input",
             )
-            dpg.add_text("BUILT-IN SPACECRAFT PRESETS", bullet=True)
-            with dpg.group(horizontal=True):
-                dpg.add_combo(
+            qt.add_text("BUILT-IN SPACECRAFT PRESETS", bullet=True)
+            with qt.group(horizontal=True):
+                qt.add_combo(
                     items=list(self.builtin_presets),
                     default_value=self.selected_builtin_preset,
                     label="Choose a preset",
@@ -207,29 +207,29 @@ class SpacecraftDesignerUI:
                     callback=self.select_builtin_preset,
                     tag="spacecraft_builtin_preset",
                 )
-                dpg.add_button(
+                qt.add_button(
                     label="Load preset",
                     callback=self.load_builtin_preset,
                 )
-            dpg.add_text(
+            qt.add_text(
                 "Choose a design or failure example, then load it. "
                 "This does not change the Save/Load file path.",
                 tag="spacecraft_preset_status",
                 wrap=460,
                 color=(175, 190, 210),
             )
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Save Design", callback=self.save)
-                dpg.add_button(label="Load Saved Design", callback=self.load)
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Load Apollo LM", callback=self.load_apollo_lm)
-                dpg.add_button(label="Lunar Demo", callback=self.load_lunar_demo)
-                dpg.add_button(label="Clear Assembly", callback=self.clear)
+            with qt.group(horizontal=True):
+                qt.add_button(label="Save Design", callback=self.save)
+                qt.add_button(label="Load Saved Design", callback=self.load)
+            with qt.group(horizontal=True):
+                qt.add_button(label="Load Apollo LM", callback=self.load_apollo_lm)
+                qt.add_button(label="Lunar Demo", callback=self.load_lunar_demo)
+                qt.add_button(label="Clear Assembly", callback=self.clear)
 
-            with dpg.tab_bar(tag="designer_tabs"):
-                with dpg.tab(label="Design"):
-                    dpg.add_text("VEHICLE LIVERY", bullet=True)
-                    dpg.add_combo(
+            with qt.tab_bar(tag="designer_tabs"):
+                with qt.tab(label="Design"):
+                    qt.add_text("VEHICLE LIVERY", bullet=True)
+                    qt.add_combo(
                         items=list(PAINT_SCHEMES),
                         default_value=self.spacecraft.appearance.paint_scheme,
                         label="Paint scheme",
@@ -237,7 +237,7 @@ class SpacecraftDesignerUI:
                         width=440,
                         tag="spacecraft_paint_scheme",
                     )
-                    dpg.add_combo(
+                    qt.add_combo(
                         items=list(NATIONAL_FLAGS),
                         default_value=self.spacecraft.appearance.national_flag,
                         label="Flag decal",
@@ -245,56 +245,56 @@ class SpacecraftDesignerUI:
                         width=440,
                         tag="spacecraft_national_flag",
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "Appearance changes are visual only and do not affect mission results.",
                         color=(175, 190, 210),
                         wrap=460,
                     )
-                    dpg.add_separator()
-                    dpg.add_text("VEHICLE ARCHITECTURE", bullet=True)
-                    dpg.add_text(
+                    qt.add_separator()
+                    qt.add_text("VEHICLE ARCHITECTURE", bullet=True)
+                    qt.add_text(
                         "",
                         tag="spacecraft_architecture_summary",
                         wrap=460,
                     )
-                    dpg.add_separator()
-                    dpg.add_text("Add component")
-                    with dpg.group(horizontal=True):
+                    qt.add_separator()
+                    qt.add_text("Add component")
+                    with qt.group(horizontal=True):
                         for label, catalog_id in (
                             ("Engine", "engine"),
                             ("Tank", "fuel_tank"),
                             ("Payload", "payload"),
                             ("Power", "power_system"),
                         ):
-                            dpg.add_button(
+                            qt.add_button(
                                 label=f"+ {label}",
                                 callback=self.add_component,
                                 user_data=catalog_id,
                             )
-                    dpg.add_text("Landing and spacecraft subsystems")
-                    with dpg.group(horizontal=True):
+                    qt.add_text("Landing and spacecraft subsystems")
+                    with qt.group(horizontal=True):
                         for label, catalog_id in (
                             ("Landing gear", "landing_leg"),
                             ("RCS", "rcs_thruster"),
                             ("Solar panel", "solar_panel"),
                         ):
-                            dpg.add_button(
+                            qt.add_button(
                                 label=f"+ {label}",
                                 callback=self.add_component,
                                 user_data=catalog_id,
                             )
-                    with dpg.group(horizontal=True):
+                    with qt.group(horizontal=True):
                         for label, catalog_id in (
                             ("Battery", "battery"),
                             ("Avionics", "avionics"),
                         ):
-                            dpg.add_button(
+                            qt.add_button(
                                 label=f"+ {label}",
                                 callback=self.add_component,
                                 user_data=catalog_id,
                             )
-                    dpg.add_text("Viewport controls", bullet=True)
-                    dpg.add_slider_float(
+                    qt.add_text("Viewport controls", bullet=True)
+                    qt.add_slider_float(
                         label="Exploded view",
                         default_value=0.0,
                         min_value=0.0,
@@ -302,48 +302,48 @@ class SpacecraftDesignerUI:
                         width=440,
                         callback=self.set_explode,
                     )
-                    with dpg.group(horizontal=True):
-                        dpg.add_checkbox(
+                    with qt.group(horizontal=True):
+                        qt.add_checkbox(
                             label="Grid",
                             default_value=True,
                             callback=self.set_grid,
                         )
-                        dpg.add_button(label="Reset Camera", callback=self.reset_camera)
-                        dpg.add_button(label="Reset Flight", callback=self.reset_flight)
-                    dpg.add_text(
+                        qt.add_button(label="Reset Camera", callback=self.reset_camera)
+                        qt.add_button(label="Reset Flight", callback=self.reset_flight)
+                    qt.add_text(
                         "Click a part in the viewport or select it below. "
                         "Position edits update the 3D view immediately.",
                         color=(175, 190, 210),
                         wrap=460,
                     )
-                    dpg.add_separator()
-                    dpg.add_text("Assembly")
-                    dpg.add_group(tag="spacecraft_components_container")
-                    dpg.add_separator()
-                    dpg.add_text("Selected component inspector", bullet=True)
-                    dpg.add_group(tag="spacecraft_component_inspector")
-                    dpg.add_text(
+                    qt.add_separator()
+                    qt.add_text("Assembly")
+                    qt.add_group(tag="spacecraft_components_container")
+                    qt.add_separator()
+                    qt.add_text("Selected component inspector", bullet=True)
+                    qt.add_group(tag="spacecraft_component_inspector")
+                    qt.add_text(
                         "",
                         tag="spacecraft_data_message",
                         wrap=460,
                         color=(255, 120, 100),
                     )
 
-                with dpg.tab(label="Analysis"):
-                    dpg.add_text("MISSION SCREENING VERDICT", bullet=True)
-                    dpg.add_text(
+                with qt.tab(label="Analysis"):
+                    qt.add_text("MISSION SCREENING VERDICT", bullet=True)
+                    qt.add_text(
                         "",
                         tag="spacecraft_model_verdict",
                         wrap=460,
                         color=(255, 190, 80),
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "",
                         tag="spacecraft_readiness_score",
                         wrap=460,
                         color=(175, 190, 210),
                     )
-                    dpg.add_progress_bar(
+                    qt.add_progress_bar(
                         default_value=0.0,
                         width=440,
                         tag="spacecraft_readiness_bar",
@@ -355,25 +355,25 @@ class SpacecraftDesignerUI:
                         "com",
                         "traceability",
                     ):
-                        dpg.add_text(
+                        qt.add_text(
                             "",
                             tag=f"spacecraft_readiness_{check_key}",
                         )
-                    dpg.add_text(
+                    qt.add_text(
                         "",
                         tag="spacecraft_model_recommendation",
                         wrap=460,
                         color=(255, 190, 80),
                     )
-                    dpg.add_separator()
-                    dpg.add_text("VEHICLE HEALTH", bullet=True)
-                    with dpg.group(horizontal=True):
-                        dpg.add_text("", tag="health_delta_v")
-                        dpg.add_text("", tag="health_twr")
-                    with dpg.group(horizontal=True):
-                        dpg.add_text("", tag="health_power")
-                        dpg.add_text("", tag="health_stability")
-                    dpg.add_text("Detailed performance values", bullet=True)
+                    qt.add_separator()
+                    qt.add_text("VEHICLE HEALTH", bullet=True)
+                    with qt.group(horizontal=True):
+                        qt.add_text("", tag="health_delta_v")
+                        qt.add_text("", tag="health_twr")
+                    with qt.group(horizontal=True):
+                        qt.add_text("", tag="health_power")
+                        qt.add_text("", tag="health_stability")
+                    qt.add_text("Detailed performance values", bullet=True)
                     for label, tag in (
                         ("Dry mass: 0 kg", "spacecraft_dry_mass"),
                         ("Fuel mass: 0 kg", "spacecraft_fuel_mass"),
@@ -385,79 +385,79 @@ class SpacecraftDesignerUI:
                         ("Burn time: 0 s", "spacecraft_burn_time"),
                         ("Power: 0.00 kW generation / 0.00 kW load", "spacecraft_power"),
                     ):
-                        dpg.add_text(label, tag=tag)
-                    dpg.add_text("", tag="spacecraft_com", wrap=460)
-                    dpg.add_text("", tag="spacecraft_tip_over", wrap=460)
-                    dpg.add_text("", tag="spacecraft_stability_warning", wrap=460)
-                    with dpg.plot(
+                        qt.add_text(label, tag=tag)
+                    qt.add_text("", tag="spacecraft_com", wrap=460)
+                    qt.add_text("", tag="spacecraft_tip_over", wrap=460)
+                    qt.add_text("", tag="spacecraft_stability_warning", wrap=460)
+                    with qt.plot(
                         label="Mass by component",
                         height=260,
                         width=-1,
                         tag="spacecraft_mass_plot",
                     ):
-                        dpg.add_plot_legend()
-                        dpg.add_plot_axis(
-                            dpg.mvXAxis,
+                        qt.add_plot_legend()
+                        qt.add_plot_axis(
+                            qt.mvXAxis,
                             label="Component",
                             tag="spacecraft_mass_x_axis",
                         )
-                        with dpg.plot_axis(
-                            dpg.mvYAxis,
+                        with qt.plot_axis(
+                            qt.mvYAxis,
                             label="Mass (kg)",
                             tag="spacecraft_mass_y_axis",
                         ):
-                            dpg.add_bar_series(
+                            qt.add_bar_series(
                                 [0.0], [0.0], label="Dry mass", weight=0.36,
                                 tag="spacecraft_mass_dry_series",
                             )
-                            dpg.add_bar_series(
+                            qt.add_bar_series(
                                 [0.4], [0.0], label="Propellant", weight=0.36,
                                 tag="spacecraft_mass_fuel_series",
                             )
-                    with dpg.plot(
+                    with qt.plot(
                         label="Delta-v vs mission budget",
                         height=260,
                         width=-1,
                         tag="spacecraft_delta_v_plot",
                     ):
-                        dpg.add_plot_legend()
-                        dpg.add_plot_axis(
-                            dpg.mvXAxis,
+                        qt.add_plot_legend()
+                        qt.add_plot_axis(
+                            qt.mvXAxis,
                             label="Mission",
                             tag="spacecraft_delta_v_x_axis",
                         )
-                        with dpg.plot_axis(
-                            dpg.mvYAxis,
+                        with qt.plot_axis(
+                            qt.mvYAxis,
                             label="Delta-v (m/s)",
                             tag="spacecraft_delta_v_y_axis",
                         ):
-                            dpg.add_bar_series(
+                            qt.add_bar_series(
                                 [-0.18], [0.0], label="Available", weight=0.36,
                                 tag="spacecraft_delta_v_available_series",
                             )
-                            dpg.add_bar_series(
+                            qt.add_bar_series(
                                 [0.18], [0.0], label="Required", weight=0.36,
                                 tag="spacecraft_delta_v_required_series",
                             )
-                    dpg.add_text("Mission assessment", bullet=True)
-                    dpg.add_text("", tag="spacecraft_mission_status", wrap=460)
-                    dpg.add_text("", tag="spacecraft_warnings", wrap=460)
-                    dpg.add_text("Lunar mission check (single-stage screening)", bullet=True)
-                    dpg.add_text("", tag="spacecraft_lunar_check", wrap=460)
-                    dpg.add_text("Vehicle data readiness", bullet=True)
-                    dpg.add_text("", tag="spacecraft_data_readiness", wrap=460)
-                with dpg.tab(label="Mission"):
-                    dpg.add_text("Lunar mission screening · JPL DE440s", bullet=True)
-                    dpg.add_text(
-                        "EARTH → MOON · APOLLO 11 LAUNCH-SITE REFERENCE",
+                    qt.add_text("Mission assessment", bullet=True)
+                    qt.add_text("", tag="spacecraft_mission_status", wrap=460)
+                    qt.add_text("", tag="spacecraft_warnings", wrap=460)
+                    qt.add_text("Lunar mission check (single-stage screening)", bullet=True)
+                    qt.add_text("", tag="spacecraft_lunar_check", wrap=460)
+                    qt.add_text("Vehicle data readiness", bullet=True)
+                    qt.add_text("", tag="spacecraft_data_readiness", wrap=460)
+                with qt.tab(label="Mission"):
+                    qt.add_text("Lunar mission screening · JPL DE440s", bullet=True)
+                    qt.add_text(
+                        "EARTH â†’ MOON · APOLLO 11 LAUNCH-SITE REFERENCE",
                         tag="mission_route_overview",
                         color=(120, 195, 255),
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         (
                             f"{APOLLO_11_REFERENCE.launch_site} · "
-                            f"{APOLLO_11_REFERENCE.launch_latitude_deg:.4f}° N, "
-                            f"{360.0 - APOLLO_11_REFERENCE.launch_longitude_east_deg:.4f}° W\n"
+                            f"{APOLLO_11_REFERENCE.launch_latitude_deg:.4f}Â° N, "
+                            f"{360.0 - APOLLO_11_REFERENCE.launch_longitude_east_deg:.4f}Â° W\n"
                             "Historical Apollo 11 reference only; launch site is "
                             "not used by the current transfer calculation."
                         ),
@@ -465,53 +465,53 @@ class SpacecraftDesignerUI:
                         wrap=460,
                         color=(175, 190, 210),
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         apollo11_reference_summary(),
                         color=(175, 190, 210),
                         tag="apollo11_reference_summary",
                     )
-                    with dpg.collapsing_header(
+                    with qt.collapsing_header(
                         label="Apollo 11 historical reference · AS-506",
                         default_open=False,
                     ):
-                        dpg.add_text(
+                        qt.add_text(
                             apollo11_reference_report(),
                             tag="apollo11_reference_report",
                             wrap=460,
                         )
-                    dpg.add_separator()
-                    dpg.add_combo(
+                    qt.add_separator()
+                    qt.add_combo(
                         items=list(SHOWCASE_SCENARIOS),
                         default_value=next(iter(SHOWCASE_SCENARIOS)),
                         label="Demo scenario",
                         width=440,
                         tag="lunar_demo_scenario",
                     )
-                    dpg.add_button(
+                    qt.add_button(
                         label="Load demo scenario",
                         callback=self.load_demo_scenario,
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "Loads a spacecraft preset and sets the example departure "
                         "date and transfer time.",
                         color=(175, 190, 210),
                         wrap=460,
                     )
-                    dpg.add_combo(
+                    qt.add_combo(
                         items=[profile.name for profile in MISSION_PROFILES.values()],
                         default_value=MISSION_PROFILES[self.mission_id].name,
                         label="Mission target",
                         callback=self.select_mission,
                         tag="spacecraft_mission_combo",
                     )
-                    dpg.add_input_text(
+                    qt.add_input_text(
                         label="Departure date (UTC)",
                         default_value=datetime.now(timezone.utc).date().isoformat(),
                         callback=self._invalidate_mission_result,
                         tag="lunar_departure_date",
                         width=300,
                     )
-                    dpg.add_input_float(
+                    qt.add_input_float(
                         label="Transfer time (days)",
                         default_value=5.0,
                         min_value=3.0,
@@ -522,40 +522,40 @@ class SpacecraftDesignerUI:
                         callback=self._invalidate_mission_result,
                         tag="lunar_transfer_days",
                     )
-                    dpg.add_checkbox(
+                    qt.add_checkbox(
                         label="Demo sounds",
                         default_value=True,
                         callback=self.set_demo_audio,
                         tag="spacecraft_demo_audio",
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "Takeoff and result sounds are synthesized; use this checkbox to mute them.",
                         tag="spacecraft_audio_status",
                         wrap=460,
                         color=(175, 190, 210),
                     )
-                    dpg.add_button(
+                    qt.add_button(
                         label="Run Lunar Mission Simulation",
                         callback=self.run_lunar_mission,
                     )
-                    dpg.add_button(
+                    qt.add_button(
                         label="Export Mission Report PDF",
                         callback=self.export_mission_report,
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "",
                         tag="mission_report_export_status",
                         wrap=460,
                         color=(175, 190, 210),
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "A successful result means lunar sphere-of-influence entry, "
                         "not capture or landing.",
                         wrap=460,
                         color=(175, 190, 210),
                     )
-                    dpg.add_text("MISSION STATUS · MODEL MILESTONES", bullet=True)
-                    with dpg.group(horizontal=True):
+                    qt.add_text("MISSION STATUS · MODEL MILESTONES", bullet=True)
+                    with qt.group(horizontal=True):
                         for label, key in (
                             ("Launch", "launch"),
                             ("Earth orbit", "earth_orbit"),
@@ -563,39 +563,39 @@ class SpacecraftDesignerUI:
                             ("Arrival", "arrival"),
                             ("Landing", "touchdown"),
                         ):
-                            dpg.add_text(
+                            qt.add_text(
                                 f"{label}: READY",
                                 tag=f"mission_stage_{key}",
                                 color=(150, 165, 185),
                             )
-                    dpg.add_text(
+                    qt.add_text(
                         "READY",
                         tag="lunar_reachability_status",
                         wrap=460,
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "",
                         tag="lunar_reachability_details",
                         wrap=460,
                         color=(195, 205, 220),
                     )
-                    dpg.add_text(
+                    qt.add_text(
                         "",
                         tag="lunar_failure_guidance",
                         wrap=460,
                         color=(255, 190, 80),
                     )
-                    dpg.add_separator()
-                    dpg.add_text("DESIGN ADVISOR · RANKED BOTTLENECKS", bullet=True)
-                    dpg.add_text(
+                    qt.add_separator()
+                    qt.add_text("DESIGN ADVISOR · RANKED BOTTLENECKS", bullet=True)
+                    qt.add_text(
                         "",
                         tag="spacecraft_design_advisor",
                         wrap=460,
                         color=(195, 205, 220),
                     )
-                    dpg.add_separator()
-                    dpg.add_text("Mission timeline", bullet=True)
-                    dpg.add_group(tag="lunar_timeline_container")
+                    qt.add_separator()
+                    qt.add_text("Mission timeline", bullet=True)
+                    qt.add_group(tag="lunar_timeline_container")
 
         self.built = True
         self._rebuild_component_controls()
@@ -630,8 +630,8 @@ class SpacecraftDesignerUI:
             return
         for component in self.spacecraft.components:
             tag = f"spacecraft_component_select_{component.id}"
-            if dpg.does_item_exist(tag):
-                dpg.configure_item(
+            if qt.does_item_exist(tag):
+                qt.configure_item(
                     tag,
                     default_value=component.id == self.selected_id,
                 )
@@ -662,9 +662,9 @@ class SpacecraftDesignerUI:
 
     @staticmethod
     def set_audio_status(message, warning=False):
-        if dpg.does_item_exist("spacecraft_audio_status"):
-            dpg.set_value("spacecraft_audio_status", message)
-            dpg.configure_item(
+        if qt.does_item_exist("spacecraft_audio_status"):
+            qt.set_value("spacecraft_audio_status", message)
+            qt.configure_item(
                 "spacecraft_audio_status",
                 color=(255, 190, 80) if warning else (175, 190, 210),
             )
@@ -706,59 +706,59 @@ class SpacecraftDesignerUI:
             self.selected_id = None
         if not self.built:
             return
-        dpg.delete_item("spacecraft_components_container", children_only=True)
+        qt.delete_item("spacecraft_components_container", children_only=True)
         for component in self.spacecraft.components:
-            with dpg.group(horizontal=True, parent="spacecraft_components_container"):
-                dpg.add_selectable(
+            with qt.group(horizontal=True, parent="spacecraft_components_container"):
+                qt.add_selectable(
                     label=component.name,
                     default_value=component.id == self.selected_id,
                     callback=self.select_component_callback,
                     user_data=component.id,
                     tag=f"spacecraft_component_select_{component.id}",
                 )
-                dpg.add_text(
+                qt.add_text(
                     f"{component.dry_mass:,.1f} kg",
                 )
-                dpg.add_button(
+                qt.add_button(
                     label="Duplicate",
                     callback=self.duplicate_component,
                     user_data=component.id,
                     small=True,
                 )
-                dpg.add_button(
+                qt.add_button(
                     label="Remove",
                     callback=self.remove_component,
                     user_data=component.id,
                     small=True,
                 )
-        dpg.delete_item("spacecraft_component_inspector", children_only=True)
+        qt.delete_item("spacecraft_component_inspector", children_only=True)
         component = self.spacecraft.get_component(self.selected_id)
         if component is None:
-            dpg.add_text(
+            qt.add_text(
                 "Select a component in the list or directly in the 3D viewport.",
                 parent="spacecraft_component_inspector",
                 color=(150, 165, 185),
                 wrap=450,
             )
         else:
-            dpg.add_text(
+            qt.add_text(
                 component.name,
                 parent="spacecraft_component_inspector",
                 color=self.SELECTED_COLOR,
             )
-            dpg.add_text(
+            qt.add_text(
                 "CHANGE IMPACT · relative to the previous edit",
                 parent="spacecraft_component_inspector",
                 color=(120, 195, 255),
             )
-            dpg.add_text(
+            qt.add_text(
                 "Edit a numeric property to see its immediate effect on modeled metrics.",
                 parent="spacecraft_component_inspector",
                 tag="spacecraft_design_impact",
                 wrap=450,
                 color=(175, 190, 210),
             )
-            dpg.add_input_text(
+            qt.add_input_text(
                 label="Component name",
                 default_value=component.name,
                 width=300,
@@ -783,7 +783,7 @@ class SpacecraftDesignerUI:
                 if maximum is not None:
                     options["max_value"] = maximum
                     options["max_clamped"] = True
-                dpg.add_input_float(**options)
+                qt.add_input_float(**options)
             self._add_placement_controls(component)
             self._add_com_controls(component)
             self._add_definition_controls(component)
@@ -841,7 +841,7 @@ class SpacecraftDesignerUI:
         elif isinstance(component, SolarPanel):
             fields.extend(
                 [
-                    ("area_m2", "Deployed area (m²)", 0.001, None),
+                    ("area_m2", "Deployed area (mÂ²)", 0.001, None),
                     ("generation_kw", "Rated generation (kW)", 0.0, None),
                 ]
             )
@@ -860,7 +860,7 @@ class SpacecraftDesignerUI:
     def _add_definition_controls(self, component):
         """Stage, data-quality, and source inputs for one component."""
         parent = "spacecraft_component_inspector"
-        dpg.add_input_int(
+        qt.add_input_int(
             label="Stage",
             default_value=component.stage,
             min_value=1,
@@ -870,7 +870,7 @@ class SpacecraftDesignerUI:
             callback=self.set_stage,
             user_data=component.id,
         )
-        dpg.add_combo(
+        qt.add_combo(
             items=list(QUALITIES),
             default_value=component.provenance.quality,
             label="Data quality",
@@ -880,7 +880,7 @@ class SpacecraftDesignerUI:
             user_data=component.id,
             tag=f"spacecraft_{component.id}_quality",
         )
-        dpg.add_input_text(
+        qt.add_input_text(
             label="Data source / revision",
             default_value=component.provenance.source,
             width=300,
@@ -891,7 +891,7 @@ class SpacecraftDesignerUI:
             tag=f"spacecraft_{component.id}_source",
         )
         if isinstance(component, Engine):
-            dpg.add_input_float(
+            qt.add_input_float(
                 label="Minimum throttle (%)",
                 default_value=(component.throttle.min_fraction or 0.0) * 100.0,
                 min_value=0.0,
@@ -902,7 +902,7 @@ class SpacecraftDesignerUI:
                 user_data=(component.id, "throttle_min_fraction"),
                 tag=f"spacecraft_{component.id}_throttle_min",
             )
-            dpg.add_input_float(
+            qt.add_input_float(
                 label="Maximum throttle (%)",
                 default_value=(component.throttle.max_fraction or 0.0) * 100.0,
                 min_value=0.0,
@@ -934,7 +934,7 @@ class SpacecraftDesignerUI:
             if maximum is not None:
                 options["max_value"] = maximum
                 options["max_clamped"] = True
-            dpg.add_input_int(**options)
+            qt.add_input_int(**options)
     def _add_placement_controls(self, component):
         labels = {"auto": "Automatic layout", "root": "Free placement"}
         parent_by_label = {}
@@ -957,7 +957,7 @@ class SpacecraftDesignerUI:
             **parent_by_label,
         }
         parent = "spacecraft_component_inspector"
-        dpg.add_combo(
+        qt.add_combo(
             items=list(label_to_mode),
             default_value=default_mode,
             label="Placement",
@@ -967,20 +967,20 @@ class SpacecraftDesignerUI:
             user_data=(component.id, label_to_mode),
             tag=f"spacecraft_{component.id}_placement_mode",
         )
-        dpg.add_text(
+        qt.add_text(
             "XYZ offsets are metres in the vehicle frame for free parts, or the "
             "parent frame for attached parts. Rotations use local Euler XYZ degrees.",
             parent=parent,
             color=(150, 165, 185),
             wrap=450,
         )
-        with dpg.group(horizontal=True, parent=parent):
-            dpg.add_button(
+        with qt.group(horizontal=True, parent=parent):
+            qt.add_button(
                 label="Return to automatic layout",
                 callback=self.reset_component_placement,
                 user_data=component.id,
             )
-            dpg.add_button(
+            qt.add_button(
                 label="Reset rotation",
                 callback=self.reset_component_rotation,
                 user_data=component.id,
@@ -990,9 +990,9 @@ class SpacecraftDesignerUI:
             if current is not None
             else self._component_visual_center(component.id)
         )
-        with dpg.group(horizontal=True, parent=parent):
+        with qt.group(horizontal=True, parent=parent):
             for axis, value in zip("xyz", position):
-                dpg.add_input_float(
+                qt.add_input_float(
                     label=f"{axis.upper()} (m)",
                     default_value=value,
                     width=130,
@@ -1002,9 +1002,9 @@ class SpacecraftDesignerUI:
                     tag=f"spacecraft_{component.id}_position_{axis}",
                 )
         rotation = current.rotation_deg if current is not None else (0.0, 0.0, 0.0)
-        with dpg.group(horizontal=True, parent=parent):
+        with qt.group(horizontal=True, parent=parent):
             for axis, value in zip("xyz", rotation):
-                dpg.add_input_float(
+                qt.add_input_float(
                     label=f"R{axis.upper()} (deg)",
                     default_value=value,
                     width=130,
@@ -1014,7 +1014,7 @@ class SpacecraftDesignerUI:
                     tag=f"spacecraft_{component.id}_rotation_{axis}",
                 )
         if current is not None and current.parent_id is not None:
-            dpg.add_combo(
+            qt.add_combo(
                 items=list(NODE_NAMES),
                 default_value=current.parent_node,
                 label="Parent node",
@@ -1023,7 +1023,7 @@ class SpacecraftDesignerUI:
                 callback=self.set_component_placement_value,
                 user_data=(component.id, "parent_node"),
             )
-            dpg.add_combo(
+            qt.add_combo(
                 items=list(NODE_NAMES),
                 default_value=current.node,
                 label="Part node",
@@ -1032,7 +1032,7 @@ class SpacecraftDesignerUI:
                 callback=self.set_component_placement_value,
                 user_data=(component.id, "node"),
             )
-            dpg.add_input_float(
+            qt.add_input_float(
                 label="Attachment angle (deg)",
                 default_value=current.angle_deg,
                 width=300,
@@ -1040,13 +1040,13 @@ class SpacecraftDesignerUI:
                 callback=self.set_component_placement_value,
                 user_data=(component.id, "angle_deg"),
             )
-        with dpg.group(horizontal=True, parent=parent):
-            dpg.add_button(
+        with qt.group(horizontal=True, parent=parent):
+            qt.add_button(
                 label="Mirror copy X",
                 callback=self.mirror_component,
                 user_data=(component.id, "x"),
             )
-            dpg.add_button(
+            qt.add_button(
                 label="Mirror copy Z",
                 callback=self.mirror_component,
                 user_data=(component.id, "z"),
@@ -1054,7 +1054,7 @@ class SpacecraftDesignerUI:
 
     def _add_com_controls(self, component):
         parent = "spacecraft_component_inspector"
-        dpg.add_checkbox(
+        qt.add_checkbox(
             label="COM position known",
             default_value=component.com_m is not None,
             parent=parent,
@@ -1062,7 +1062,7 @@ class SpacecraftDesignerUI:
             user_data=component.id,
         )
         if component.com_m is None:
-            dpg.add_text(
+            qt.add_text(
                 "Unknown COM data is not estimated. Enable this only when you "
                 "can provide the part's automatic-layout vehicle coordinates; "
                 "enabling starts at (0, 0, 0). Known COM values follow placements.",
@@ -1071,9 +1071,9 @@ class SpacecraftDesignerUI:
                 wrap=450,
             )
             return
-        with dpg.group(horizontal=True, parent=parent):
+        with qt.group(horizontal=True, parent=parent):
             for axis, value in zip("xyz", component.com_m):
-                dpg.add_input_float(
+                qt.add_input_float(
                     label=f"COM {axis.upper()} (m)",
                     default_value=value,
                     width=130,
@@ -1238,7 +1238,7 @@ class SpacecraftDesignerUI:
             return
         name = str(app_data).strip()
         if not name:
-            dpg.set_value(sender, component.name)
+            qt.set_value(sender, component.name)
             return
         component.name = name
         self._placement_changed()
@@ -1275,8 +1275,8 @@ class SpacecraftDesignerUI:
     @staticmethod
     def _show_design_impact(before, after):
         tag = "spacecraft_design_impact"
-        if dpg.does_item_exist(tag):
-            dpg.set_value(tag, SpacecraftDesignerUI._design_impact_text(before, after))
+        if qt.does_item_exist(tag):
+            qt.set_value(tag, SpacecraftDesignerUI._design_impact_text(before, after))
 
     def set_stage(self, sender, app_data, user_data):
         component = self.spacecraft.get_component(user_data)
@@ -1298,8 +1298,8 @@ class SpacecraftDesignerUI:
                 ("quality", f"spacecraft_{component_id}_quality"),
                 ("source", f"spacecraft_{component_id}_source"),
             ):
-                if dpg.does_item_exist(tag):
-                    dpg.set_value(tag, getattr(component.provenance, key))
+                if qt.does_item_exist(tag):
+                    qt.set_value(tag, getattr(component.provenance, key))
             return
         self._set_data_message("")
         self.refresh()
@@ -1312,8 +1312,8 @@ class SpacecraftDesignerUI:
 
     @staticmethod
     def _set_data_message(message):
-        if dpg.does_item_exist("spacecraft_data_message"):
-            dpg.set_value("spacecraft_data_message", message)
+        if qt.does_item_exist("spacecraft_data_message"):
+            qt.set_value("spacecraft_data_message", message)
 
     def update_component(self, sender, app_data, user_data):
         component_id, field_name = user_data
@@ -1334,7 +1334,7 @@ class SpacecraftDesignerUI:
                     **{throttle_field: fraction},
                 )
             except ValueError:
-                dpg.set_value(sender, (old_fraction or 0.0) * 100.0)
+                qt.set_value(sender, (old_fraction or 0.0) * 100.0)
                 return
         else:
             old_value = getattr(component, field_name)
@@ -1352,14 +1352,14 @@ class SpacecraftDesignerUI:
                 component.__post_init__()
             except (TypeError, ValueError):
                 setattr(component, field_name, old_value)
-                dpg.set_value(sender, old_value or 0.0)
+                qt.set_value(sender, old_value or 0.0)
                 return
-            if field_name in optional_fields and dpg.does_item_exist(sender):
-                dpg.set_value(sender, new_value or 0.0)
+            if field_name in optional_fields and qt.does_item_exist(sender):
+                qt.set_value(sender, new_value or 0.0)
         if field_name == "capacity":
             fuel_tag = f"spacecraft_{component.id}_fuel_mass"
-            if dpg.does_item_exist(fuel_tag):
-                dpg.configure_item(
+            if qt.does_item_exist(fuel_tag):
+                qt.configure_item(
                     fuel_tag,
                     max_value=component.capacity,
                     max_clamped=True,
@@ -1372,7 +1372,7 @@ class SpacecraftDesignerUI:
     def _rename_spacecraft(self, sender, app_data, user_data):
         name = str(app_data).strip()
         if not name:
-            dpg.set_value(sender, self.spacecraft.name)
+            qt.set_value(sender, self.spacecraft.name)
             return
         self.spacecraft.name = name
         self.events.publish("spacecraft.updated", self.spacecraft)
@@ -1446,13 +1446,13 @@ class SpacecraftDesignerUI:
         if label is None:
             return
         self.selected_builtin_preset = label
-        if dpg.does_item_exist("spacecraft_builtin_preset"):
-            dpg.set_value("spacecraft_builtin_preset", label)
+        if qt.does_item_exist("spacecraft_builtin_preset"):
+            qt.set_value("spacecraft_builtin_preset", label)
 
     @staticmethod
     def _set_preset_status(message):
-        if dpg.does_item_exist("spacecraft_preset_status"):
-            dpg.set_value("spacecraft_preset_status", message)
+        if qt.does_item_exist("spacecraft_preset_status"):
+            qt.set_value("spacecraft_preset_status", message)
 
     def load_apollo_lm(self, sender=None, app_data=None, user_data=None):
         """Load the Apollo LM reference vehicle without changing the save path."""
@@ -1472,7 +1472,7 @@ class SpacecraftDesignerUI:
 
     def load_demo_scenario(self, sender=None, app_data=None, user_data=None):
         """Load a documented spacecraft and mission-input example."""
-        scenario_name = str(app_data or dpg.get_value("lunar_demo_scenario"))
+        scenario_name = str(app_data or qt.get_value("lunar_demo_scenario"))
         scenario = SHOWCASE_SCENARIOS.get(scenario_name)
         if scenario is None:
             self._set_lunar_status(
@@ -1484,10 +1484,10 @@ class SpacecraftDesignerUI:
         preset_path = DEFAULT_PRESET.parent / scenario["preset"]
         self._load_reference(load_spacecraft(preset_path))
         self._select_builtin_preset_for_path(preset_path)
-        if dpg.does_item_exist("lunar_departure_date"):
-            dpg.set_value("lunar_departure_date", scenario["departure_date"])
-        if dpg.does_item_exist("lunar_transfer_days"):
-            dpg.set_value("lunar_transfer_days", scenario["transfer_days"])
+        if qt.does_item_exist("lunar_departure_date"):
+            qt.set_value("lunar_departure_date", scenario["departure_date"])
+        if qt.does_item_exist("lunar_transfer_days"):
+            qt.set_value("lunar_transfer_days", scenario["transfer_days"])
         self._set_lunar_status(
             f"DEMO SCENARIO READY — {scenario_name}",
             (
@@ -1518,18 +1518,18 @@ class SpacecraftDesignerUI:
         self.refresh()
 
     def run_lunar_mission(self, sender=None, app_data=None, user_data=None):
-        departure_date = dpg.get_value("lunar_departure_date")
-        transfer_days = dpg.get_value("lunar_transfer_days")
+        departure_date = qt.get_value("lunar_departure_date")
+        transfer_days = qt.get_value("lunar_transfer_days")
         if not str(departure_date).strip():
             self._set_lunar_status("Enter a departure date in UTC (YYYY-MM-DD).", "")
             return
         if self._mission_run is not None and self._mission_run.serial == self._mission_serial:
             return  # a run is already in progress
         self.mission_result = None  # a rerun starts clean; no stale result lingers
-        if dpg.does_item_exist("lunar_failure_guidance"):
-            dpg.set_value("lunar_failure_guidance", "")
+        if qt.does_item_exist("lunar_failure_guidance"):
+            qt.set_value("lunar_failure_guidance", "")
         self._set_lunar_status(
-            "Mission simulation running…",
+            "Mission simulation runningâ€¦",
             "Downloading/reading JPL ephemeris and integrating the trajectory.",
         )
         liftoff, has_thrust = can_lift_off(self.analysis)
@@ -1608,8 +1608,8 @@ class SpacecraftDesignerUI:
                 "Simulation could not run.",
                 f"{error}\nCheck the date, network, and JPL DE440s access.",
             )
-            if dpg.does_item_exist("lunar_failure_guidance"):
-                dpg.set_value(
+            if qt.does_item_exist("lunar_failure_guidance"):
+                qt.set_value(
                     "lunar_failure_guidance",
                     "This is a simulation/data error, not evidence that the "
                     "spacecraft failed. Check the date and ephemeris access.",
@@ -1630,8 +1630,8 @@ class SpacecraftDesignerUI:
         else:
             title = "MISSION FAILED — propagated path missed the Moon"
         self._set_lunar_status(title, lunar_mission_report(result, self.analysis))
-        if dpg.does_item_exist("lunar_failure_guidance"):
-            dpg.set_value(
+        if qt.does_item_exist("lunar_failure_guidance"):
+            qt.set_value(
                 "lunar_failure_guidance",
                 self._mission_recommendation(result, self.analysis),
             )
@@ -1680,17 +1680,17 @@ class SpacecraftDesignerUI:
     @staticmethod
     def _set_mission_report_status(message, warning=False):
         tag = "mission_report_export_status"
-        if dpg.does_item_exist(tag):
-            dpg.set_value(tag, message)
-            dpg.configure_item(
+        if qt.does_item_exist(tag):
+            qt.set_value(tag, message)
+            qt.configure_item(
                 tag,
                 color=(255, 190, 80) if warning else (175, 190, 210),
             )
 
     def _invalidate_mission_result(self, sender=None, app_data=None, user_data=None):
         self._cancel_mission()
-        if dpg.does_item_exist("lunar_failure_guidance"):
-            dpg.set_value("lunar_failure_guidance", "")
+        if qt.does_item_exist("lunar_failure_guidance"):
+            qt.set_value("lunar_failure_guidance", "")
         if self.mission_result is not None:
             self.mission_result = None
             self._set_lunar_status(
@@ -1699,17 +1699,17 @@ class SpacecraftDesignerUI:
             )
 
     def _set_lunar_status(self, status, details):
-        if dpg.does_item_exist("lunar_reachability_status"):
-            dpg.set_value("lunar_reachability_status", status)
-        if dpg.does_item_exist("lunar_reachability_details"):
-            dpg.set_value("lunar_reachability_details", details)
+        if qt.does_item_exist("lunar_reachability_status"):
+            qt.set_value("lunar_reachability_status", status)
+        if qt.does_item_exist("lunar_reachability_details"):
+            qt.set_value("lunar_reachability_details", details)
         self._refresh_mission_timeline()
 
     def _refresh_mission_timeline(self, running=False):
         container = "lunar_timeline_container"
-        if not dpg.does_item_exist(container):
+        if not qt.does_item_exist(container):
             return
-        dpg.delete_item(container, children_only=True)
+        qt.delete_item(container, children_only=True)
         colors = {
             "READY": (150, 165, 185),
             "PENDING": (120, 135, 155),
@@ -1724,16 +1724,16 @@ class SpacecraftDesignerUI:
         )
         for milestone in milestones:
             stage_tag = f"mission_stage_{milestone.key}"
-            if dpg.does_item_exist(stage_tag):
-                dpg.set_value(
+            if qt.does_item_exist(stage_tag):
+                qt.set_value(
                     stage_tag,
                     f"{milestone.label}: {milestone.state}",
                 )
-                dpg.configure_item(
+                qt.configure_item(
                     stage_tag,
                     color=colors.get(milestone.state, (175, 190, 210)),
                 )
-            dpg.add_text(
+            qt.add_text(
                 f"{milestone.state:>10}   {milestone.label}"
                 + (f" — {milestone.reason}" if milestone.reason else ""),
                 parent=container,
@@ -1750,16 +1750,16 @@ class SpacecraftDesignerUI:
             component.fuel_mass if isinstance(component, FuelTank) else 0.0
             for component in components
         ]
-        if dpg.does_item_exist("spacecraft_mass_dry_series"):
-            dpg.set_value(
+        if qt.does_item_exist("spacecraft_mass_dry_series"):
+            qt.set_value(
                 "spacecraft_mass_dry_series",
                 [[value - 0.18 for value in x], dry_mass],
             )
-            dpg.set_value(
+            qt.set_value(
                 "spacecraft_mass_fuel_series",
                 [[value + 0.18 for value in x], fuel_mass],
             )
-            dpg.set_axis_ticks(
+            qt.set_axis_ticks(
                 "spacecraft_mass_x_axis",
                 tuple((name, float(index)) for index, name in enumerate(labels)),
             )
@@ -1770,16 +1770,16 @@ class SpacecraftDesignerUI:
         required = [
             profile.required_delta_v for profile in MISSION_PROFILES.values()
         ]
-        if dpg.does_item_exist("spacecraft_delta_v_available_series"):
-            dpg.set_value(
+        if qt.does_item_exist("spacecraft_delta_v_available_series"):
+            qt.set_value(
                 "spacecraft_delta_v_available_series",
                 [[value - 0.18 for value in mission_x], available],
             )
-            dpg.set_value(
+            qt.set_value(
                 "spacecraft_delta_v_required_series",
                 [[value + 0.18 for value in mission_x], required],
             )
-            dpg.set_axis_ticks(
+            qt.set_axis_ticks(
                 "spacecraft_delta_v_x_axis",
                 tuple(
                     (name, float(index))
@@ -1940,8 +1940,8 @@ class SpacecraftDesignerUI:
 
     @staticmethod
     def _set_item_color(tag, color):
-        if dpg.does_item_exist(tag):
-            dpg.configure_item(tag, color=color)
+        if qt.does_item_exist(tag):
+            qt.configure_item(tag, color=color)
 
     def refresh(self):
         self.analysis = analyze_spacecraft(self.spacecraft)
@@ -1976,7 +1976,7 @@ class SpacecraftDesignerUI:
             com_text = f"Center of mass: X {x:.2f} · Y {y:.2f} · Z {z:.2f} m"
         tip_over = self.spacecraft.tip_over_angle_deg()
         tip_text = (
-            f"Static tip-over limit: {tip_over:.1f}°"
+            f"Static tip-over limit: {tip_over:.1f}Â°"
             if tip_over is not None
             else "Static tip-over limit: unavailable (gear or COM data incomplete)"
         )
@@ -1997,7 +1997,7 @@ class SpacecraftDesignerUI:
             "health_stability": (
                 "STABILITY  unknown"
                 if tip_over is None
-                else f"STABILITY  {tip_over:.1f}°"
+                else f"STABILITY  {tip_over:.1f}Â°"
             ),
             "spacecraft_dry_mass": f"Dry mass: {analysis.dry_mass:,.1f} kg",
             "spacecraft_fuel_mass": f"Fuel mass: {analysis.fuel_mass:,.1f} kg",
@@ -2030,15 +2030,15 @@ class SpacecraftDesignerUI:
             "spacecraft_design_advisor": format_advice(advice),
         }
         for tag, value in values.items():
-            if dpg.does_item_exist(tag):
-                dpg.set_value(tag, value)
-        if dpg.does_item_exist("spacecraft_paint_scheme"):
-            dpg.set_value(
+            if qt.does_item_exist(tag):
+                qt.set_value(tag, value)
+        if qt.does_item_exist("spacecraft_paint_scheme"):
+            qt.set_value(
                 "spacecraft_paint_scheme",
                 self.spacecraft.appearance.paint_scheme,
             )
-        if dpg.does_item_exist("spacecraft_national_flag"):
-            dpg.set_value(
+        if qt.does_item_exist("spacecraft_national_flag"):
+            qt.set_value(
                 "spacecraft_national_flag",
                 self.spacecraft.appearance.national_flag,
             )
@@ -2048,9 +2048,9 @@ class SpacecraftDesignerUI:
         }
         for key, label, passed in readiness_checks:
             tag = f"spacecraft_readiness_{key}"
-            if dpg.does_item_exist(tag):
-                dpg.set_value(tag, f"{'PASS' if passed else 'CHECK'}  {label}")
-                dpg.configure_item(tag, color=check_colors[passed])
+            if qt.does_item_exist(tag):
+                qt.set_value(tag, f"{'PASS' if passed else 'CHECK'}  {label}")
+                qt.configure_item(tag, color=check_colors[passed])
         self._set_item_color(
             "health_delta_v",
             check_colors[lunar_prescreen(analysis).delta_v_ok],
@@ -2071,9 +2071,9 @@ class SpacecraftDesignerUI:
             if tip_over is not None
             else (255, 190, 80),
         )
-        if dpg.does_item_exist("spacecraft_name_input"):
-            dpg.set_value("spacecraft_name_input", self.spacecraft.name)
-        if dpg.does_item_exist("spacecraft_mass_dry_series"):
+        if qt.does_item_exist("spacecraft_name_input"):
+            qt.set_value("spacecraft_name_input", self.spacecraft.name)
+        if qt.does_item_exist("spacecraft_mass_dry_series"):
             self._refresh_plots()
         self._set_item_color("spacecraft_model_verdict", verdict_color)
         self._refresh_mission_timeline(running=self.mission_running)

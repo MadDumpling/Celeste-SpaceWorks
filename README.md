@@ -1,6 +1,6 @@
 # Spacecraft Configurator
 
-An interactive spacecraft mission-design and analysis platform. A DearPyGui panel edits the
+An interactive spacecraft mission-design and analysis platform. A Qt panel edits the
 vehicle (engines, propellant tanks, payloads, landing legs, RCS thrusters, solar
 arrays, batteries, and avionics) and an OpenGL viewport shows it live in 3D.
 Mass, ideal delta-v, TWR, burn time, and installed power ratings update as the
@@ -178,24 +178,25 @@ viewport/
   orbit_camera.py        Turntable camera
   spacecraft_viewport.py Draws the layout, grid, highlight; picking
 rendering/
-  opengl_renderer.py     Offscreen moderngl renderer (MSAA, lit meshes, ID picking)
+  opengl_renderer.py     Qt-compatible moderngl renderer (lit meshes, ID picking)
 ui/
   designer_application.py  Wires panel, input, viewport, renderer
   spacecraft_designer.py   Designer panel
-  dpg_input_source.py      Mouse/scroll state for the viewport image
-  layout.py, application.py DearPyGui window and viewport setup
+  qt_input_source.py       Mouse/scroll state for the viewport widget
+  layout.py, application.py Qt window and viewport setup
 core/                    Event bus, performance monitor
 presets/spacecraft/      Starter design
 tests/
 ```
 
-The renderer draws into an offscreen framebuffer and uploads it to a DearPyGui
-dynamic texture each frame. Picking re-renders component IDs into a second
-buffer only when the cursor moves or clicks.
+The Qt application drives the renderer without uploading a full-frame dynamic texture
+to the UI every frame. Picking re-renders component IDs into a second buffer only when
+the cursor moves or clicks.
 
 ## Setup
 
-Requires Python 3.11 and a GPU/driver with OpenGL 3.3.
+Requires Python 3.11, PySide6, and a GPU/driver with OpenGL 3.3. Qt runs in the
+application process without a separate UI rendering buffer.
 
 ```powershell
 .\setup.ps1   # create .venv and install requirements

@@ -9,10 +9,7 @@ def main():
     designer_app.initialize()
 
     try:
-        while designer_app.running and app.running():
-            designer_app.update()
-            designer_app.render()
-            app.render()
+        app.run(designer_app)
     finally:
         designer_app.shutdown()
         app.shutdown()

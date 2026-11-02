@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class Renderer(ABC):
-    """Offscreen 3D renderer that presents into the DearPyGui viewport texture."""
+    """Renderer interface used by the Qt viewport widget."""
 
     @property
     @abstractmethod

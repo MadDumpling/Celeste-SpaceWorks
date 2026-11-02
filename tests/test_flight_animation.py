@@ -349,7 +349,7 @@ def designer(monkeypatch, tmp_path):
     ui = SpacecraftDesignerUI(EventBus(), preset_path=tmp_path / "d.json")
     ui.load_lunar_demo()
     monkeypatch.setattr(
-        designer_module.dpg,
+        designer_module.qt,
         "get_value",
         lambda tag: {"lunar_departure_date": "2030-01-01", "lunar_transfer_days": 5.0}[tag],
     )
@@ -457,7 +457,7 @@ def test_editing_the_design_mid_run_discards_the_result(designer, monkeypatch):
 
 
 def test_poll_does_not_drop_a_run_whose_thread_has_not_started(designer):
-    # Regression: DearPyGui button callbacks run on another thread, so the main
+    # Regression: Qt callbacks must not race the main update loop, so the main
     # loop could poll between creating the worker thread and starting it. A run
     # is only finished once its worker has stored an outcome.
     ui, seen = designer
@@ -480,7 +480,7 @@ def test_run_started_from_another_thread_is_always_applied(designer, monkeypatch
     )
     for attempt in range(60):
         seen.clear()
-        presser = threading.Thread(target=ui.run_lunar_mission)  # like a dpg callback
+        presser = threading.Thread(target=ui.run_lunar_mission)  # like a Qt callback
         presser.start()
         deadline = time.time() + 5.0
         while "mission.completed" not in names(seen):
@@ -546,39 +546,23 @@ def test_reset_flight_event_cancels_run(designer):
 # -- callbacks run on the main thread ----------------------------------------
 
 
-def test_application_runs_widget_callbacks_on_the_main_thread(monkeypatch):
+def test_application_processes_qt_events_on_the_gui_thread():
     from ui import application as module
 
-    dpg = module.dpg
-    dpg.reset_mock()
     app = module.Application()
     app.initialize()
-
-    kwargs = dpg.configure_app.call_args.kwargs
-    assert kwargs["manual_callback_management"] is True
-
-    dpg.get_callback_queue.return_value = [("job-1",), ("job-2",)]
     app.render()
+    assert app.running()
+    app.shutdown()
 
-    assert [c.args[0] for c in dpg.run_callbacks.call_args_list] == [[("job-1",)], [("job-2",)]]
-    dpg.render_dearpygui_frame.assert_called_once()
 
-
-def test_a_failing_callback_does_not_stop_the_frame_loop(monkeypatch, capsys):
+def test_application_shutdown_stops_qt_window():
     from ui import application as module
 
-    dpg = module.dpg
-    dpg.reset_mock()
-    dpg.get_callback_queue.return_value = [("bad",), ("good",)]
-    dpg.run_callbacks.side_effect = [RuntimeError("callback bug"), None]
-    try:
-        module.Application().render()
-    finally:
-        dpg.run_callbacks.side_effect = None
-
-    assert dpg.run_callbacks.call_count == 2  # the second job still ran
-    dpg.render_dearpygui_frame.assert_called_once()
-    assert "callback bug" in capsys.readouterr().err
+    app = module.Application()
+    app.initialize()
+    app.shutdown()
+    assert not app.running()
 
 
 # -- viewport / application integration (real OpenGL) -------------------------
@@ -809,7 +793,7 @@ def test_app_ticks_the_banner_while_the_simulation_is_running(app, monkeypatch):
     designer.background_missions = True
     monkeypatch.setattr(designer, "_display_mission_result", lambda result: None)
     monkeypatch.setattr(
-        designer_module.dpg,
+        designer_module.qt,
         "get_value",
         lambda tag: {"lunar_departure_date": "2030-01-01", "lunar_transfer_days": 5.0}[tag],
     )

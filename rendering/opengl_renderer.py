@@ -1,4 +1,3 @@
-import dearpygui.dearpygui as dpg
 import moderngl
 import numpy as np
 
@@ -131,22 +130,24 @@ def decode_pick_id(rgb):
 
 
 class OpenGLRenderer(Renderer):
-    def __init__(self):
+    def __init__(self, samples=1, context=None, qt_framebuffer=None):
         self.width = 1280
         self.height = 720
-        self.ctx = moderngl.create_standalone_context()
-        self.texture = self.ctx.texture(
-            (self.width, self.height),
-            4,
-            dtype="f1",
-        )
-        self.fbo = self.ctx.framebuffer(
-            color_attachments=[self.texture],
-            depth_attachment=self.ctx.depth_renderbuffer(
-                (self.width, self.height),
-            ),
-        )
-        self.msaa_fbo = self._create_msaa_framebuffer(samples=4)
+        self.qt_context = context is not None
+        self.ctx = context or moderngl.create_standalone_context()
+        self.qt_framebuffer = qt_framebuffer
+        if self.qt_context:
+            self.texture = None
+            self.fbo = None
+        else:
+            self.texture = self.ctx.texture((self.width, self.height), 4, dtype="f1")
+            self.fbo = self.ctx.framebuffer(
+                color_attachments=[self.texture],
+                depth_attachment=self.ctx.depth_renderbuffer((self.width, self.height)),
+            )
+        # Qt owns the window framebuffer now, so rendering is direct.
+        # Keep multisampling opt-in for callers that need it.
+        self.msaa_fbo = self._create_msaa_framebuffer(samples) if samples > 1 else None
         self.render_fbo = self.msaa_fbo or self.fbo
 
         self.mesh_program = self.ctx.program(
@@ -161,29 +162,24 @@ class OpenGLRenderer(Renderer):
             vertex_shader=LINE_VERTEX_SHADER,
             fragment_shader=LINE_FRAGMENT_SHADER,
         )
-        self.pick_fbo = self.ctx.framebuffer(
-            color_attachments=[
-                self.ctx.texture((self.width, self.height), 4, dtype="f1"),
-            ],
-            depth_attachment=self.ctx.depth_renderbuffer(
-                (self.width, self.height),
-            ),
-        )
+        # Picking is input-driven.  Do not allocate a second full-size
+        # framebuffer during startup; create it on the first pick request.
+        self.pick_fbo = None
         self._meshes = {}
         self._pick_draws = []
         self._line_vbo = None
         self._line_vao = None
         self._line_capacity = 0
 
-        self._frame_upload = np.empty(
-            (self.height, self.width, 4),
-            dtype=np.float32,
-        )
-
         print("OpenGL initialized")
         print("Renderer:", self.ctx.info.get("GL_RENDERER"))
         print("Vendor:", self.ctx.info.get("GL_VENDOR"))
         print("Version:", self.ctx.info.get("GL_VERSION"))
+
+    def set_qt_framebuffer(self, framebuffer):
+        """Set the QOpenGLWidget FBO currently owned by Qt."""
+        if self.qt_context:
+            self.qt_framebuffer = framebuffer
 
     @property
     def name(self):
@@ -196,6 +192,18 @@ class OpenGLRenderer(Renderer):
     @property
     def aspect(self):
         return self.width / self.height
+
+    def resize(self, width, height):
+        """Update the logical viewport size; Qt owns the actual framebuffer."""
+        self.width = max(1, int(width))
+        self.height = max(1, int(height))
+        if self.qt_context:
+            # ModernGL does not automatically track QOpenGLWidget's viewport
+            # after a native resize.
+            self.ctx.viewport = (0, 0, self.width, self.height)
+        if self.pick_fbo is not None:
+            self.pick_fbo.release()
+            self.pick_fbo = None
 
     def _create_msaa_framebuffer(self, samples):
         samples = min(samples, self.ctx.max_samples)
@@ -219,7 +227,12 @@ class OpenGLRenderer(Renderer):
             return None
 
     def begin_frame(self):
-        self.render_fbo.use()
+        if self.qt_context:
+            if self.qt_framebuffer is None:
+                raise RuntimeError("Qt framebuffer is not initialized")
+            self.qt_framebuffer.use()
+        else:
+            self.render_fbo.use()
         self.ctx.clear(0.03, 0.035, 0.06, 1.0, depth=1.0)
         self._pick_draws.clear()
 
@@ -308,6 +321,15 @@ class OpenGLRenderer(Renderer):
         """
         if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
             return 0
+        if self.pick_fbo is None:
+            self.pick_fbo = self.ctx.framebuffer(
+                color_attachments=[
+                    self.ctx.texture((self.width, self.height), 4, dtype="f1"),
+                ],
+                depth_attachment=self.ctx.depth_renderbuffer(
+                    (self.width, self.height),
+                ),
+            )
         px = min(int(x * self.width), self.width - 1)
         py = min(int(y * self.height), self.height - 1)
 
@@ -320,22 +342,19 @@ class OpenGLRenderer(Renderer):
             self.pick_program["pick_color"].value = encode_pick_id(pick_id)
             pick_vao.render(moderngl.TRIANGLES)
         rgb = self.pick_fbo.read(viewport=(px, py, 1, 1), components=3)
-        self.render_fbo.use()
+        if self.qt_context:
+            if self.qt_framebuffer is not None:
+                self.qt_framebuffer.use()
+        else:
+            self.render_fbo.use()
         return decode_pick_id(rgb)
 
     def end_frame(self):
+        if getattr(self, "qt_context", False):
+            return
+        # With the default single-sample target rendering is already complete
+        # in ``self.fbo``.  A resolve is only necessary for explicit opt-in
+        # multisampling, unlike the former offscreen texture path.
         msaa_fbo = getattr(self, "msaa_fbo", None)
         if msaa_fbo is not None:
             self.ctx.copy_framebuffer(self.fbo, msaa_fbo)
-
-        pixels = np.frombuffer(self.texture.read(), dtype=np.uint8)
-        pixels = pixels.reshape((self.height, self.width, 4))
-
-        # Convert and flip in one pass into a contiguous reusable upload buffer.
-        np.multiply(pixels[::-1], 1.0 / 255.0, out=self._frame_upload)
-
-        if dpg.does_item_exist("viewport_texture"):
-            dpg.set_value(
-                "viewport_texture",
-                self._frame_upload.reshape(-1),
-            )

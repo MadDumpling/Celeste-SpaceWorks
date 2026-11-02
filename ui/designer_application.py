@@ -1,7 +1,6 @@
-import dearpygui.dearpygui as dpg
+from .qt_widgets import qt
 
 import time
-
 from core import EventBus
 from core.performance import PerformanceMonitor
 from rendering import OpenGLRenderer
@@ -17,7 +16,8 @@ from spacecraft.components import (
 from viewport import SpacecraftViewport
 from viewport import flight
 
-from .dpg_input_source import DpgInputSource
+from .qt_input_source import QtInputSource
+from .qt_opengl_viewport import QtOpenGLViewport
 from .audio_cues import AudioCues
 from .layout import create_dockspace
 from . import mission_outcome as outcome
@@ -31,7 +31,8 @@ class DesignerApplication:
 
     def __init__(self):
         self.events = EventBus()
-        self.renderer = OpenGLRenderer()
+        self.renderer = None
+        self.opengl_viewport = None
         self.performance = PerformanceMonitor()
         self.audio = AudioCues()
         self.designer = SpacecraftDesignerUI(self.events)
@@ -69,8 +70,14 @@ class DesignerApplication:
         create_dockspace()
         self.designer.build()
         self._set_audio_status(self.audio.status_message)
-        self.input_source = DpgInputSource()
+        self.input_source = QtInputSource()
         self.viewport.invalidate(reframe=True)
+        self.opengl_viewport = QtOpenGLViewport(self._render_frame)
+        qt.replace_widget("viewport_image", self.opengl_viewport)
+
+    def _render_frame(self, renderer):
+        self.renderer = renderer
+        self.viewport.render(renderer)
 
     def shutdown(self):
         self.audio.close()
@@ -114,9 +121,9 @@ class DesignerApplication:
         self._set_audio_status(self.audio.status_message)
 
     def _set_banner(self, text, color):
-        if dpg.does_item_exist("mission_banner"):
-            dpg.set_value("mission_banner", text)
-            dpg.configure_item("mission_banner", color=color)
+        if qt.does_item_exist("mission_banner"):
+            qt.set_value("mission_banner", text)
+            qt.configure_item("mission_banner", color=color)
 
     def _on_mission_started(self, liftoff=True, has_thrust=True):
         self._held_banner = None
@@ -204,12 +211,12 @@ class DesignerApplication:
                 )
             elif isinstance(component, RcsThruster):
                 lines.append(
-                    f"RCS: {component.thruster_count} × "
+                    f"RCS: {component.thruster_count} Ã— "
                     f"{component.thrust_n:,.1f} N · Isp {component.isp_s:.1f} s"
                 )
             elif isinstance(component, SolarPanel):
                 lines.append(
-                    f"Solar array: {component.area_m2:.2f} m² · "
+                    f"Solar array: {component.area_m2:.2f} mÂ² · "
                     f"{component.generation_kw:.2f} kW rated"
                 )
             elif isinstance(component, Battery):
@@ -228,8 +235,8 @@ class DesignerApplication:
             ("viewport_component_title", title),
             ("viewport_component_details", details),
         ):
-            if dpg.does_item_exist(tag):
-                dpg.set_value(tag, value)
+            if qt.does_item_exist(tag):
+                qt.set_value(tag, value)
 
     def _on_explode(self, amount):
         self.viewport.explode = amount
@@ -244,11 +251,12 @@ class DesignerApplication:
 
     def update(self):
         self.performance.update()
-        if dpg.does_item_exist("fps_text"):
-            dpg.set_value(
+        if qt.does_item_exist("fps_text"):
+            qt.set_value(
                 "fps_text",
                 f"{self.performance.fps:.0f} FPS · "
-                f"{self.performance.frame_time:.1f} ms · {self.renderer.name}",
+                f"{self.performance.frame_time:.1f} ms · "
+                f"{self.renderer.name if self.renderer is not None else 'OpenGL initializing'}",
             )
         self.step_flight(self.performance.frame_time / 1000.0)
         self._handle_input()
@@ -297,6 +305,6 @@ class DesignerApplication:
             self.viewport.reset_camera()
 
     def render(self):
-        self.renderer.begin_frame()
-        self.viewport.render(self.renderer)
-        self.renderer.end_frame()
+        if self.opengl_viewport is not None:
+            self.opengl_viewport.update()
+

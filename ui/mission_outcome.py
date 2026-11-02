@@ -1,6 +1,6 @@
 """Turn a mission simulation result into a flight outcome and a verdict banner.
 
-Pure functions (no DearPyGui/OpenGL) so the wording and the classification are
+Pure functions (no Qt/OpenGL) so the wording and the classification are
 unit-testable. Colours are 0-255 RGB.
 """
 

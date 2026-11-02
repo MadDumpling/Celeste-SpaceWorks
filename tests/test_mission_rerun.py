@@ -130,7 +130,7 @@ def synchronous_designer(application, monkeypatch, verdicts):
     designer.background_missions = False  # each verdict arrives immediately
     monkeypatch.setattr(designer, "_display_mission_result", lambda result: None)
     monkeypatch.setattr(
-        designer_module.dpg,
+        designer_module.qt,
         "get_value",
         lambda tag: {"lunar_departure_date": "2030-01-01", "lunar_transfer_days": 5.0}[tag],
     )

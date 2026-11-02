@@ -1,49 +1,49 @@
-import traceback
-
-import dearpygui.dearpygui as dpg
+from .qt_widgets import qt
+try:
+    from PySide6.QtCore import QTimer
+except ImportError:
+    QTimer = None
 
 
 class Application:
 
     def initialize(self):
 
-        dpg.create_context()
+        qt.create_context()
 
-        dpg.configure_app(
+        qt.configure_app(
             docking=True,
             docking_space=True,
-            # Run widget callbacks on the main thread, between frames. By default
-            # DearPyGui runs them on its own thread, racing with the render loop.
-            manual_callback_management=True,
+            # Qt delivers widget signals on the GUI thread.
         )
 
-        dpg.create_viewport(
+        qt.create_viewport(
             title="Spacecraft Configurator",
             width=1920,
             height=1080,
         )
 
-        dpg.setup_dearpygui()
-        dpg.show_viewport()
+        qt.setup()
+        qt.show_viewport()
 
     def running(self):
-        return dpg.is_dearpygui_running()
+        return qt.is_running()
 
     @staticmethod
     def run_callbacks():
         """Run queued widget callbacks on this (the main) thread."""
-        jobs = dpg.get_callback_queue()
-        if not jobs:
-            return
-        for job in jobs:
-            try:
-                dpg.run_callbacks([job])
-            except Exception:
-                traceback.print_exc()  # a failing callback must not kill the app
+        qt.process_events()
 
     def render(self):
         self.run_callbacks()
-        dpg.render_dearpygui_frame()
+
+    def run(self, designer_app):
+        if QTimer is None:
+            return
+        timer = QTimer()
+        timer.timeout.connect(designer_app.update)
+        timer.start(16)
+        return qt.application.exec()
 
     def shutdown(self):
-        dpg.destroy_context()
+        qt.destroy_context()
