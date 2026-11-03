@@ -442,6 +442,17 @@ Validation datasets help verify simulation behavior against historical reference
 
 ---
 
+# Spacecraft Components
+
+Contributors should prefer the smallest reusable component that can accurately represent the source material.
+
+If a subsystem can reasonably be used in multiple vehicles, it should be contributed as a Part package.
+
+Vehicles should primarily be assemblies of referenced parts rather than monolithic datasets.
+
+All attachable parts must define one or more attachment nodes. Attachment nodes represent physical connection locations and form the primary assembly mechanism used by Celeste SpaceWorks.
+---
+
 # Review Checklist
 
 All submissions must satisfy the following:
