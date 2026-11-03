@@ -1,4 +1,4 @@
-# Spacecraft Configurator
+# Celeste SpaceWorks
 
 An interactive spacecraft mission-design and analysis platform. A DearPyGui panel edits the
 vehicle (engines, propellant tanks, payloads, landing legs, RCS thrusters, solar
@@ -6,6 +6,8 @@ arrays, batteries, and avionics) and an OpenGL viewport shows it live in 3D.
 Mass, ideal delta-v, TWR, burn time, and installed power ratings update as the
 design changes, and a lunar-reachability check propagates the vehicle against
 the JPL DE440s ephemeris.
+
+https://www.youtube.com/watch?v=Surbwp79n4k
 
 ## Viewport controls
 
