@@ -89,12 +89,20 @@ class SpacecraftViewport:
             self.invalidate(reframe=True)
 
     def update(self, dt: float) -> None:
-        """Advance the flight animation and keep the camera on it."""
         if not self.flight.active:
             return
+
         self.flight.update(dt)
+        print("dt", dt)
         centre, radius = self.flight.focus()
+
+
+       
+
+
         self.camera.follow(centre, radius, dt)
+
+       # self.invalidate()
 
     def _refresh_layout(self) -> None:
         if not self._dirty:
@@ -114,6 +122,7 @@ class SpacecraftViewport:
             self.camera.view_projection(renderer.aspect),
             self.camera.eye,
         )
+
 
         if self.show_grid:
             span = max(20.0, self.layout.bounding_radius * 3.0)

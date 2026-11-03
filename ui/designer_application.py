@@ -70,9 +70,9 @@ class DesignerApplication:
         create_dockspace()
         self.designer.build()
         self._set_audio_status(self.audio.status_message)
-        self.input_source = QtInputSource()
         self.viewport.invalidate(reframe=True)
         self.opengl_viewport = QtOpenGLViewport(self._render_frame)
+        self.input_source = QtInputSource(self.opengl_viewport)
         qt.replace_widget("viewport_image", self.opengl_viewport)
 
     def _render_frame(self, renderer):
@@ -260,6 +260,9 @@ class DesignerApplication:
             )
         self.step_flight(self.performance.frame_time / 1000.0)
         self._handle_input()
+        if self.opengl_viewport is not None:
+            self.opengl_viewport.update()
+
 
     def _handle_input(self):
         source = self.input_source

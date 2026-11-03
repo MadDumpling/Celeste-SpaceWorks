@@ -225,7 +225,6 @@ class OpenGLRenderer(Renderer):
             )
         except moderngl.Error:
             return None
-
     def begin_frame(self):
         if self.qt_context:
             if self.qt_framebuffer is None:
@@ -233,6 +232,7 @@ class OpenGLRenderer(Renderer):
             self.qt_framebuffer.use()
         else:
             self.render_fbo.use()
+
         self.ctx.clear(0.03, 0.035, 0.06, 1.0, depth=1.0)
         self._pick_draws.clear()
 
@@ -271,6 +271,7 @@ class OpenGLRenderer(Renderer):
         pick_id=0,
     ):
         """Draw a lit triangle mesh; GPU buffers are cached per ``key``."""
+
         vao, _, _ = self._mesh_vaos(key, mesh)
         model = np.asarray(model, dtype=np.float32)
         normal_matrix = np.linalg.inv(model[:3, :3]).T
@@ -314,6 +315,7 @@ class OpenGLRenderer(Renderer):
         self.ctx.disable(moderngl.BLEND)
 
     def pick(self, x, y):
+        #print("PICK", x ,y)
         """Return the pick id at normalized viewport coords (origin bottom-left).
 
         Replays this frame's pickable draws into an offscreen ID buffer, so it
@@ -347,6 +349,7 @@ class OpenGLRenderer(Renderer):
                 self.qt_framebuffer.use()
         else:
             self.render_fbo.use()
+
         return decode_pick_id(rgb)
 
     def end_frame(self):
