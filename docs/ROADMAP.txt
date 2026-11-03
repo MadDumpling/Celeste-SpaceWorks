@@ -1,0 +1,511 @@
+Celeste SpaceWorks Assembly System Specification
+Blender-Inspired Hierarchical Spacecraft Construction Architecture
+
+Status: Draft Proposal
+ Version: 1.0
+ Applies To: Celeste SpaceWorks Editor, Data Packages, Vehicle Schema, Component Library
+
+1. Overview
+
+This document defines the next-generation assembly architecture for Celeste SpaceWorks.
+
+The goal is to evolve the editor from a component-property editor into a direct-manipulation spacecraft construction system inspired by:
+
+Blender
+Kerbal Space Program
+CAD assembly systems
+Aerospace digital-twin platforms
+
+The primary design philosophy is:
+
+Spacecraft are assemblies of reusable parts connected through attachment nodes.
+
+Components are no longer treated as independent objects within a flat vehicle list. Instead, they form a hierarchical assembly graph.
+
+2. Design Goals
+
+The assembly system shall:
+
+Support arbitrary spacecraft configurations.
+Allow reusable component libraries.
+Support direct viewport construction.
+Support hierarchical assemblies.
+Eliminate manual coordinate editing as the primary workflow.
+Support symmetry placement.
+Support contributor-created components.
+Scale to large vehicles.
+Preserve scientific provenance.
+
+The assembly system shall not:
+
+Require hardcoded vehicle structures.
+Require special-case logic for specific spacecraft.
+Require manual JSON editing for normal assembly.
+3. Core Concepts
+3.1 Part
+
+A Part is the smallest reusable spacecraft building block.
+
+Examples:
+
+Engine
+Fuel tank
+Solar array
+Battery
+Landing leg
+Docking port
+Payload module
+Structural truss
+Adapter
+
+A part contains:
+
+{
+  "id": "lmde",
+
+  "name": "LM Descent Engine",
+
+  "provenance": {},
+
+  "mass_properties": {},
+
+  "geometry": {},
+
+  "attachment_nodes": []
+}
+
+3.2 Assembly
+
+An Assembly is a collection of connected parts.
+
+Examples:
+
+Apollo LM Descent Stage
+
+  Tanks
+  Engine
+  Landing Legs
+
+Dragon Trunk
+
+  Structure
+  Solar Wings
+
+
+An assembly may be reused inside other assemblies.
+
+3.3 Vehicle
+
+A Vehicle is the top-level assembly.
+
+Examples:
+
+Apollo LM
+Starship
+Falcon 9
+Orion
+
+
+Vehicles contain no special logic.
+
+A vehicle is simply:
+
+{
+  "root_assembly": "apollo_lm"
+}
+
+4. Attachment Nodes
+4.1 Purpose
+
+Attachment nodes define locations where parts may connect.
+
+Every attachable component shall expose one or more nodes.
+
+4.2 Node Definition
+
+Example:
+
+{
+  "id": "top",
+
+  "position_m": [0, 2.5, 0],
+
+  "forward": [0, 1, 0],
+
+  "role": "stack"
+}
+
+4.3 Node Types
+Stack Nodes
+
+Primary axial connections.
+
+Examples:
+
+top
+bottom
+
+
+Used for:
+
+Tank → Tank
+Tank → Engine
+Adapter → Tank
+
+Radial Nodes
+
+Connections on an exterior surface.
+
+Examples:
+
+radial_1
+radial_2
+radial_3
+radial_4
+
+
+Used for:
+
+Landing gear
+Solar panels
+RCS thrusters
+
+Mount Nodes
+
+Single attachment point.
+
+Examples:
+
+Landing leg
+Engine
+Battery
+Avionics
+
+Docking Nodes
+
+Future implementation.
+
+Examples:
+
+NDS
+APAS
+CBM
+
+5. Assembly Graph
+
+The vehicle shall be represented as a graph.
+
+Example:
+
+Core Tank
+│
+├── Engine Mount
+│   ├── Engine 1
+│   ├── Engine 2
+│   └── Engine 3
+│
+├── Left Solar Wing
+│
+└── Right Solar Wing
+
+
+Each connection defines:
+
+{
+  "parent_part": "core_tank",
+
+  "parent_node": "bottom",
+
+  "child_part": "lmde",
+
+  "child_node": "mount"
+}
+
+6. Viewport Construction Workflow
+Current Workflow
+Create Part
+
+Select Parent
+
+Select Nodes
+
+Edit Coordinates
+
+Edit Rotations
+
+
+This workflow is considered transitional.
+
+Desired Workflow
+Create Part
+
+Drag Part
+
+Hover Attachment Node
+
+Snap
+
+Release
+
+
+The viewport becomes the primary assembly interface.
+
+7. Visible Attachment Nodes
+
+Attachment nodes shall be displayed in the viewport.
+
+States:
+
+Hidden
+
+Default.
+
+Hover
+Yellow
+
+
+The mouse is near the node.
+
+Compatible
+Green
+
+
+A selected part can connect here.
+
+Selected
+Orange
+
+
+Node currently used by selected part.
+
+Invalid
+Red
+
+
+Connection not permitted.
+
+8. Direct Manipulation Controls
+Select
+Left Click
+
+
+Select part.
+
+Move
+G
+
+
+Move selected part.
+
+Equivalent to Blender Grab.
+
+Rotate
+R
+
+
+Rotate selected part.
+
+Delete
+Delete
+
+
+Remove selected part.
+
+Frame
+F
+
+
+Frame selected assembly.
+
+Reset Camera
+R (no selection)
+
+
+Current behavior.
+
+9. Assembly Outliner
+
+A hierarchical assembly tree shall be introduced.
+
+Example:
+
+Vehicle
+│
+├── Core Tank
+│
+├── Engine Cluster
+│   ├── Engine 1
+│   ├── Engine 2
+│   └── Engine 3
+│
+├── Solar Arrays
+│   ├── Port Wing
+│   └── Starboard Wing
+│
+└── Landing System
+
+
+Functions:
+
+Select
+Rename
+Re-parent
+Collapse
+Expand
+Duplicate
+10. Symmetry System
+Axial Symmetry
+
+Supported values:
+
+1x
+2x
+4x
+8x
+
+
+Example:
+
+Place Landing Leg
+Symmetry = 4
+
+
+Result:
+
+Leg 1
+Leg 2
+Leg 3
+Leg 4
+
+Radial Symmetry
+
+Supported values:
+
+3x
+4x
+6x
+8x
+12x
+
+
+Typical KSP-style placement.
+
+Mirror Symmetry
+
+Supported axes:
+
+X
+Y
+Z
+
+11. Adapter Components
+
+Adapter components are first-class citizens.
+
+Examples:
+
+Engine Mount
+Payload Adapter
+Truss Hub
+Docking Adapter
+Radial Bracket
+
+
+Adapters expose multiple nodes.
+
+Example:
+
+{
+  "type": "adapter",
+
+  "nodes": [
+    "top",
+    "bottom",
+    "radial_1",
+    "radial_2",
+    "radial_3",
+    "radial_4"
+  ]
+}
+
+
+Adapters eliminate special logic.
+
+Complex structures emerge from connections alone.
+
+12. Contributor Requirements
+
+Every contributed part shall include:
+
+Mass Properties
+{
+  "dry_mass_kg": 100
+}
+
+Geometry
+{
+  "length_m": 2.0,
+  "diameter_m": 1.5
+}
+
+Attachment Nodes
+{
+  "attachment_nodes": [...]
+}
+
+
+Attachment nodes are mandatory.
+
+A component with no nodes cannot participate in assemblies.
+
+Provenance
+{
+  "quality": "published",
+  "source": "...",
+  "revision": "...",
+  "uncertainty_pct": null
+}
+
+13. Future Extensions
+
+The architecture is intended to support:
+
+Structural Analysis
+Loads
+Moments
+Failure Analysis
+
+Fuel Networks
+Tank
+→ Valve
+→ Engine
+
+Electrical Networks
+Solar
+→ Battery
+→ Avionics
+
+Thermal Networks
+Radiator
+→ Loop
+→ Equipment
+
+Docking Operations
+Vehicle A
+↔ Vehicle B
+
+Surface Systems
+Landing Pads
+Rovers
+Cargo Modules
+
+
+without requiring changes to the assembly model.
+
+14. Guiding Principle
+
+Celeste SpaceWorks shall represent spacecraft as hierarchical assemblies of provenance-tracked reusable parts connected through attachment nodes.
+
+The editor's primary interaction model shall be direct manipulation within the 3D viewport, while inspectors provide detailed editing and engineering metadata. Vehicle complexity should arise from reusable components, assemblies, and adapters rather than hardcoded spacecraft-specific logic.
+
+This architecture enables Celeste SpaceWorks to scale from simple educational demonstrations to a community-built aerospace reference and mission-design platform.
