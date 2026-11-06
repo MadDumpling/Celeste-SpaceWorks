@@ -12,6 +12,7 @@ from ui.designer_application import DesignerApplication
 from ui.mission_outcome import lunar_mission_report
 from ui.spacecraft_designer import (
     DEFAULT_PRESET,
+    FLIGHT_SCHOOL_COMPONENT_GUIDE,
     SHOWCASE_SCENARIOS,
     SpacecraftDesignerUI,
 )
@@ -29,6 +30,28 @@ def test_default_preset_is_the_lunar_capable_demo():
         "Battery",
         "Avionics",
     } <= {type(part).__name__ for part in craft.components}
+
+
+def test_flight_school_explains_every_component_type_and_model_limits():
+    guide = dict(FLIGHT_SCHOOL_COMPONENT_GUIDE)
+    expected_components = {
+        "MAIN ENGINE",
+        "FUEL TANK",
+        "PAYLOAD",
+        "POWER SYSTEM",
+        "SOLAR PANELS",
+        "BATTERIES",
+        "AVIONICS",
+        "RCS THRUSTERS",
+        "LANDING GEAR",
+    }
+
+    assert set(guide) == expected_components
+    assert "specific impulse" in guide["MAIN ENGINE"]
+    assert "compatible" in guide["FUEL TANK"]
+    assert "not counted as main-engine thrust" in guide["RCS THRUSTERS"]
+    assert "not used" in guide["POWER SYSTEM"]
+    assert "does not make the simulator model descent" in guide["LANDING GEAR"]
 
 
 def test_architecture_summary_reports_actual_cluster_counts_and_target():
@@ -429,6 +452,18 @@ def test_selection_is_published_and_cleared_when_part_removed(tmp_path):
 
     assert selected == [target.id, None]
     assert ui.selected_id is None
+
+
+def test_selecting_design_tab_requests_full_vehicle_frame(tmp_path):
+    events = EventBus()
+    frame_requests = []
+    events.subscribe("view.frame_vehicle", lambda: frame_requests.append(True))
+    ui = SpacecraftDesignerUI(events, preset_path=tmp_path / "design.json")
+
+    ui.on_tab_changed(None, "Analysis", None)
+    ui.on_tab_changed(None, "Design", None)
+
+    assert frame_requests == [True]
 
 
 def test_adding_a_component_selects_it(tmp_path):

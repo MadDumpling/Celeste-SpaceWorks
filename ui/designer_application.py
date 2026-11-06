@@ -50,6 +50,9 @@ class DesignerApplication:
             self._on_spacecraft_appearance_updated,
         )
         self.events.subscribe("component.selected", self._on_component_selected)
+        self.events.subscribe("component.added", self._on_component_structure_changed)
+        self.events.subscribe("component.removed", self._on_component_structure_changed)
+        self.events.subscribe("view.frame_vehicle", self._on_frame_vehicle)
         self.events.subscribe("view.explode", self._on_explode)
         self.events.subscribe("view.grid", self._on_grid)
         self.events.subscribe("view.reset_camera", self.viewport.reset_camera)
@@ -172,6 +175,12 @@ class DesignerApplication:
     def _on_component_selected(self, component_id):
         self.viewport.selected_id = component_id
         self._refresh_component_overlay()
+
+    def _on_frame_vehicle(self):
+        self.viewport.invalidate(reframe=True)
+
+    def _on_component_structure_changed(self, component):
+        self.viewport.invalidate(reframe=True)
 
     def _refresh_component_overlay(self):
         component = self.designer.spacecraft.get_component(self.viewport.selected_id)
