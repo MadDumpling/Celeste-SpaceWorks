@@ -122,6 +122,56 @@ SHOWCASE_SCENARIOS = {
         "description": "The tank is full, but none of its propellant is compatible with the engine.",
     },
 }
+FLIGHT_SCHOOL_COMPONENT_GUIDE = (
+    (
+        "MAIN ENGINE",
+        "Main-engine thrust raises TWR; specific impulse (Isp) affects the "
+        "ideal delta-v estimate. Engine dry mass counts against both. More "
+        "thrust by itself does not guarantee more delta-v.",
+    ),
+    (
+        "FUEL TANK",
+        "Only usable propellant compatible with the engine contributes to "
+        "delta-v. Fuel and tank dry mass both add weight; mismatched fuel adds "
+        "weight but cannot be burned in this estimate.",
+    ),
+    (
+        "PAYLOAD",
+        "Adds dry mass without adding main-engine thrust or propellant, making "
+        "the liftoff TWR and ideal delta-v checks harder to pass.",
+    ),
+    (
+        "POWER SYSTEM",
+        "Its dry mass affects vehicle mass. Declared power generation and "
+        "storage affect the power summary, but are not used in the current "
+        "trajectory or lunar-reachability calculation.",
+    ),
+    (
+        "SOLAR PANELS",
+        "Add dry mass and declared electrical generation. Power is summarized "
+        "but is not used to propel or steer the simulated lunar trajectory.",
+    ),
+    (
+        "BATTERIES",
+        "Add dry mass and declared energy-storage/charge limits. They do not "
+        "add propulsion or change the trajectory in this simulation.",
+    ),
+    (
+        "AVIONICS",
+        "Adds dry mass and a declared electrical load. Guidance and navigation "
+        "hardware do not steer the current trajectory model.",
+    ),
+    (
+        "RCS THRUSTERS",
+        "Add dry mass and show auxiliary thrust, but that thrust is not counted "
+        "as main-engine thrust; RCS control and propellant use are not simulated.",
+    ),
+    (
+        "LANDING GEAR",
+        "Adds dry mass and can inform stability checks. It does not make the "
+        "simulator model descent, touchdown, or a safe landing.",
+    ),
+)
 
 
 class _MissionRun:
@@ -226,8 +276,128 @@ class SpacecraftDesignerUI:
                 dpg.add_button(label="Lunar Demo", callback=self.load_lunar_demo)
                 dpg.add_button(label="Clear Assembly", callback=self.clear)
 
-            with dpg.tab_bar(tag="designer_tabs"):
-                with dpg.tab(label="Design"):
+            with dpg.tab_bar(
+                tag="designer_tabs",
+                callback=self.on_tab_changed,
+            ):
+                with dpg.tab(label="Flight School"):
+                    dpg.add_text(
+                        "MISSION CONTROL  /  FLIGHT SCHOOL",
+                        color=(80, 226, 190),
+                    )
+                    dpg.add_text(
+                        "Your lunar mission starts with three questions. "
+                        "No prior rocketry required.",
+                        wrap=460,
+                        color=(190, 207, 228),
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "01  /  MEET THE SPACECRAFT",
+                        color=(126, 175, 255),
+                    )
+                    dpg.add_text(
+                        "Every part adds a capability—and mass. Wet mass is "
+                        "the whole vehicle with its propellant loaded.",
+                        wrap=460,
+                    )
+                    dpg.add_text(
+                        "MISSION CONTROL TIP  ·  More fuel can help the trip, "
+                        "but the engine must lift that extra weight.",
+                        wrap=460,
+                        color=(255, 190, 80),
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "02  /  CAN IT LIFT OFF?",
+                        color=(126, 175, 255),
+                    )
+                    dpg.add_text(
+                        "TWR = total thrust ÷ (wet mass × g₀)",
+                        color=(80, 226, 190),
+                    )
+                    dpg.add_text(
+                        "Think of TWR as engine push compared with the "
+                        "spacecraft's weight. Above 1 means thrust exceeds "
+                        "weight in this simplified liftoff check.",
+                        wrap=460,
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "03  /  HOW MUCH SPEED CAN IT GAIN?",
+                        color=(126, 175, 255),
+                    )
+                    dpg.add_text(
+                        "Δv = Isp × g₀ × ln(wet mass ÷ final mass)",
+                        color=(80, 226, 190),
+                    )
+                    dpg.add_text(
+                        "Delta-v is the spacecraft's ideal speed-change "
+                        "budget. Isp describes engine efficiency, g₀ is "
+                        "standard gravity, and final mass is what remains "
+                        "after usable propellant is spent.",
+                        wrap=460,
+                    )
+                    dpg.add_text(
+                        "DESIGN TRADE-OFF  ·  More usable fuel can raise "
+                        "delta-v, while its mass can lower liftoff TWR.",
+                        wrap=460,
+                        color=(255, 190, 80),
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "04  /  WHAT EACH PART CHANGES",
+                        color=(126, 175, 255),
+                    )
+                    dpg.add_text(
+                        "The mission checks mostly come down to main-engine "
+                        "thrust, compatible usable fuel, and the mass of the "
+                        "whole vehicle.",
+                        wrap=460,
+                    )
+                    for part_name, impact in FLIGHT_SCHOOL_COMPONENT_GUIDE:
+                        dpg.add_text(part_name, color=(80, 226, 190))
+                        dpg.add_text(impact, wrap=460)
+                    dpg.add_text(
+                        "MISSION CONTROL TIP  ·  Power, RCS, and landing gear "
+                        "can matter to a real mission, but their capabilities "
+                        "do not drive the current trajectory simulation.",
+                        wrap=460,
+                        color=(255, 190, 80),
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "05  /  PLAN THE ROUTE",
+                        color=(126, 175, 255),
+                    )
+                    dpg.add_text(
+                        "The screen checks TWR above 1 and whether ideal "
+                        "delta-v clears the Earth-ascent allowance and the "
+                        "date-specific lunar injection need. If those pass, "
+                        "the trajectory is propagated using JPL DE440s to see "
+                        "whether it enters the Moon's sphere of influence.",
+                        wrap=460,
+                    )
+                    dpg.add_text(
+                        "Entering the Moon's sphere of influence is an "
+                        "encounter—not lunar orbit or a safe landing. The "
+                        "animation is an illustration of the result.",
+                        wrap=460,
+                        color=(190, 207, 228),
+                    )
+                    dpg.add_separator()
+                    dpg.add_text(
+                        "READY FOR THE SIMULATOR?",
+                        color=(80, 226, 190),
+                    )
+                    dpg.add_text(
+                        "Open Design to inspect or customize the Lunar Demo, "
+                        "Analysis to check the trade-offs, and Mission to run "
+                        "the lunar trajectory.",
+                        wrap=460,
+                    )
+
+                with dpg.tab(label="Design", tag="design_tab"):
                     dpg.add_text("VEHICLE LIVERY", bullet=True)
                     dpg.add_combo(
                         items=list(PAINT_SCHEMES),
@@ -259,6 +429,12 @@ class SpacecraftDesignerUI:
                     )
                     dpg.add_separator()
                     dpg.add_text("Add component")
+                    dpg.add_text(
+                        "The full spacecraft stays in view. Orbit and pan to "
+                        "inspect sections; select a part to edit it.",
+                        color=(175, 190, 210),
+                        wrap=460,
+                    )
                     with dpg.group(horizontal=True):
                         for label, catalog_id in (
                             ("Engine", "engine"),
@@ -317,7 +493,7 @@ class SpacecraftDesignerUI:
                         wrap=460,
                     )
                     dpg.add_separator()
-                    dpg.add_text("Assembly")
+                    dpg.add_text("Assembly  ·  select to edit  ·  + duplicate  ·  - remove")
                     dpg.add_group(tag="spacecraft_components_container")
                     dpg.add_separator()
                     dpg.add_text("Selected component inspector", bullet=True)
@@ -612,11 +788,18 @@ class SpacecraftDesignerUI:
         self.select_component(component.id)
         self.refresh()
 
+    def on_tab_changed(self, sender, app_data, user_data):
+        label = app_data if isinstance(app_data, str) else dpg.get_item_label(app_data)
+        if label == "Design":
+            self.events.publish("view.frame_vehicle")
+
     def select_component(self, component_id):
         """Select a component and synchronize its viewport highlight."""
         if component_id is not None and self.spacecraft.get_component(component_id) is None:
             component_id = None
         if component_id == self.selected_id:
+            if component_id is not None:
+                self.events.publish("component.selected", component_id)
             return
         self.selected_id = component_id
         self._rebuild_component_controls()
@@ -720,13 +903,13 @@ class SpacecraftDesignerUI:
                     f"{component.dry_mass:,.1f} kg",
                 )
                 dpg.add_button(
-                    label="Duplicate",
+                    label="+",
                     callback=self.duplicate_component,
                     user_data=component.id,
                     small=True,
                 )
                 dpg.add_button(
-                    label="Remove",
+                    label="-",
                     callback=self.remove_component,
                     user_data=component.id,
                     small=True,

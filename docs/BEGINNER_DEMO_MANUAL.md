@@ -82,8 +82,12 @@ executable instead, for example:
 ```
 
 The main window contains the **Spacecraft Designer** panel and the 3D
-viewport. The panel has **Design**, **Analysis**, and **Mission** tabs. The app
-normally opens with the **Lunar Demo** preset already loaded.
+viewport. The panel has a **Flight School** briefing, followed by **Design**,
+**Analysis**, and **Mission** tabs. Flight School explains how each component
+affects the modeled thrust, mass, power, and lunar-trajectory checks; it also
+calls out component capabilities the trajectory does not simulate. You can
+skip it and explore any tab.
+The app normally opens with the **Lunar Demo** preset already loaded.
 
 The first lunar mission run may need to download the JPL DE440s ephemeris
 kernel (a data file describing planetary positions). Internet access may be
@@ -94,12 +98,13 @@ spacecraft failed.
 ## 3. A short demo run-through
 
 This run-through is designed for a live presentation. It starts with the
-already loaded Lunar Demo, shows the design and analysis, then runs a repeatable
-encounter scenario.
+Flight School briefing and already loaded Lunar Demo, shows the design and
+analysis, then runs a repeatable encounter scenario.
 
 ### Step A: Introduce the vehicle
 
-1. Start on the **Design** tab.
+1. Start on **Flight School** and briefly point out the four ideas and the
+   displayed equations, then open **Design**.
 2. Point out the component list and the 3D spacecraft.
 3. Say: “This is an illustrative spacecraft assembled from editable parts. Its
    numbers are chosen to demonstrate the software's checks; they are not
@@ -112,7 +117,10 @@ encounter scenario.
 2. Use the **mouse wheel** to zoom.
 3. Drag with the **right or middle mouse button** to pan.
 4. Click a component in the viewport or component list to select it. The
-   selected part is highlighted and its properties appear in the inspector.
+   selected part is highlighted and its properties appear in the inspector;
+   the camera keeps the whole spacecraft framed so you can orbit and pan
+   between sections. Use **+** beside a part to duplicate it or **-** to
+   remove it. Choosing **Design** frames the complete spacecraft again.
 5. Move the **Exploded view** slider to separate the stacked sections. Return
    it to zero to restore the assembled view.
 6. Use **Grid** to show or hide the reference grid. Use **Reset Camera** (or

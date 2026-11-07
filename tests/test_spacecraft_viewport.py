@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from rendering import OpenGLRenderer
@@ -42,6 +43,20 @@ def test_viewport_handles_empty_design_and_stale_selection(renderer):
     _render(viewport, renderer)
 
     assert viewport.layout.parts == []
+
+
+def test_selecting_component_does_not_change_camera_framing():
+    craft = load_spacecraft(DEFAULT_PRESET)
+    viewport = SpacecraftViewport(lambda: craft)
+    viewport._refresh_layout()
+    center = viewport.layout.camera_center.copy()
+    distance = viewport.camera.distance
+
+    viewport.selected_id = craft.components[0].id
+    viewport.update(1.0)
+
+    np.testing.assert_array_equal(viewport.camera.target, center)
+    assert viewport.camera.distance == distance
 
 
 def test_invalidate_keeps_pending_reframe():
