@@ -1,3 +1,4 @@
+#readiness.py
 """Report what a vehicle definition is still missing before it can support a landing claim.
 
 ``blocking`` gaps are data a powered-descent/touchdown simulation needs and
