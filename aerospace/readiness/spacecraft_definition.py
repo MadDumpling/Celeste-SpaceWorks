@@ -1,8 +1,8 @@
 from engineering.readiness.report import DefinitionReport
 from engineering.readiness.provenance import check_provenance
 
-from aerospace.components import Engine, FuelTank
-from aerospace.mass_properties import mass_properties
+from spacecraft.components import Engine, FuelTank
+from spacecraft.mass_properties import mass_properties
 
 from .engine_rules import check_engine
 
