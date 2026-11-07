@@ -18,12 +18,12 @@ def assess_spacecraft_definition(spacecraft):
         "vehicle-level data",
     )
 
-    _check_landing_gear(report, spacecraft)
+    check_landing_gear(report, spacecraft)
 
-    _check_attitude_limits(report, spacecraft)
+    check_attitude_limits(report, spacecraft)
 
-    _check_mass_properties(report, spacecraft)
+    check_mass_properties(report, spacecraft)
 
-    _check_components(report, spacecraft)
+    check_components(report, spacecraft)
 
     return report
